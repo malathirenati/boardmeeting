@@ -1,0 +1,30 @@
+name: Sync board meetings
+on:
+  schedule:
+    - cron: "30 20 * * *"   # 02:00 IST every night
+  workflow_dispatch: {}      # "Publish now" from the index sheet, or the Actions tab
+permissions:
+  contents: write
+concurrency: sync
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install openpyxl pillow cryptography google-auth requests
+      - name: Read the meeting sheets and build the dashboard
+        run: python tools/publish.py --google-index "$INDEX_SHEET_ID" --out . --embed tools/template.html --light
+        env:
+          DASHBOARD_PASSWORD: ${{ secrets.DASHBOARD_PASSWORD }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          INDEX_SHEET_ID: ${{ vars.INDEX_SHEET_ID }}
+          PICTURES_FOLDER_ID: ${{ vars.PICTURES_FOLDER_ID }}
+      - name: Commit if anything changed
+        run: |
+          git config user.name "board-dashboard-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html data
+          if git diff --cached --quiet; then echo "No changes"; else git commit -m "Sync board meetings" && git push; fi

@@ -1,0 +1,680 @@
+<meta charset="utf-8">
+<title>TILN Board Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Roboto+Mono:wght@400&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --wine:#620d3c; --wine-dark:#4a0a2e; --wine-soft:#f5e6ec; --gold:#f1a222; --gold-soft:#fcf0d9;
+  --paper:#ffffff; --deep:#f7f5f2; --ink:#171413; --ink-70:rgba(23,20,19,.70); --ink-50:rgba(23,20,19,.50);
+  --ink-20:rgba(23,20,19,.16); --ink-10:rgba(23,20,19,.08); --neg:#a3282d; --pos:#2f6b4a;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --mono:'Roboto Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --pad-x:40px; --rule:1px solid var(--ink-20);
+}
+@media (max-width:960px){:root{--pad-x:24px}}
+@media (max-width:560px){:root{--pad-x:18px}}
+*{box-sizing:border-box;border-radius:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--sans);font-variant-numeric:tabular-nums lining-nums}
+h1,h2,h3{font-weight:400;margin:0;text-wrap:balance}
+p{margin:0;text-wrap:pretty}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--wine);outline-offset:2px}
+.mono,.eyebrow,.meta{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-50);font-weight:400}
+.meta{letter-spacing:.08em}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:var(--pad-x)}
+
+/* buttons */
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.btn{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:12px 22px;border:0;background:var(--wine);color:#fff;cursor:pointer;min-height:40px}
+.btn:hover{background:var(--wine-dark)}
+.btn.gold{background:var(--gold);color:var(--ink);font-weight:600}
+.btn.ghost{background:transparent;border:var(--rule);color:var(--ink)}
+.btn.ghost:hover{background:var(--deep)}
+.btn.sm{padding:6px 10px;min-height:30px;font-size:11px}
+.btn.danger{background:transparent;border:1px solid var(--neg);color:var(--neg)}
+.btn.danger.armed{background:var(--neg);color:#fff}
+
+/* login */
+#login{min-height:100vh;min-height:100dvh;background:var(--wine);color:#fff;display:grid;align-items:center;padding-inline:var(--pad-x)}
+#login .box{max-width:460px;display:grid;gap:22px;padding-block:48px}
+#login img{width:56px;height:56px}
+#login h1{font-size:44px;line-height:1.05;letter-spacing:-.02em}
+#login h1 em{font-style:italic;color:var(--gold)}
+#login label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);display:block;margin-bottom:6px}
+#login input{width:100%;background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;padding:12px 14px;font-size:16px}
+#login input:focus-visible{outline:2px solid var(--gold)}
+#login .err{color:#ffd9a0;min-height:1.5em;font-size:14px}
+#login .fine{color:rgba(255,255,255,.55);font-size:13px}
+
+/* nav */
+.nav{background:var(--wine);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:20}
+.nav .row1{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:38px;height:38px}
+.brand .n{font-size:16px;line-height:1.2}
+.brand .m{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+.navr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.navr select{background:var(--wine-dark);color:#fff;border:1px solid rgba(255,255,255,.18);padding:6px 8px;min-height:34px}
+.navr .lnk{background:none;border:0;color:rgba(255,255,255,.8);cursor:pointer;font-size:14px;padding:6px 4px}
+.navr .lnk:hover{color:#fff;text-decoration:underline}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;border-top:1px solid rgba(255,255,255,.18)}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;color:rgba(255,255,255,.85);font-size:15px;letter-spacing:.3px;padding:13px 12px 11px;white-space:nowrap;cursor:pointer}
+.tabs button:hover{color:#fff}
+.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:var(--gold)}
+
+/* edit band */
+.editband{background:var(--gold-soft);border-bottom:var(--rule)}
+.archband{background:var(--ink);color:rgba(255,255,255,.85);font-size:14px}
+.archband .wrap{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-block:12px}
+.rowlist{border-top:2px solid var(--ink)}
+.rowlist a,.rowlist button.ml{display:grid;grid-template-columns:1fr auto;gap:4px 24px;align-items:baseline;width:100%;text-align:left;background:none;border:0;border-bottom:var(--rule);padding:16px 0;cursor:pointer;color:var(--ink);transition:background .15s ease}
+.rowlist button.ml:hover{background:var(--deep)}
+.rowlist .t{font-size:18px;font-weight:500}
+.rowlist .s{grid-column:1/-1;font-size:14px;color:var(--ink-70)}
+.navr optgroup{color:var(--ink)}
+.editband .wrap{display:grid;gap:12px;padding-block:14px}
+.editband .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.editband .msg{font-size:14px;color:var(--ink-70);margin-right:auto}
+.sub{border-top:var(--rule);padding-top:12px;display:grid;gap:10px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.f{display:grid;gap:4px}
+.f label{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-70)}
+.f input,.f select,.f textarea,.tblx input{border:var(--rule);background:var(--paper);padding:8px 10px;min-height:38px;width:100%}
+.f textarea{min-height:110px;line-height:1.5;resize:vertical}
+.status{font-size:14px;color:var(--pos);min-height:1.4em}
+.status.bad{color:var(--neg)}
+
+/* page head */
+.head{padding-block:48px 36px;border-bottom:var(--rule);display:grid;gap:14px}
+.head h1{font-size:40px;line-height:1.2;letter-spacing:-.02em}
+.head h1 em{font-style:italic;color:var(--wine)}
+.lede{font-size:22px;font-weight:300;line-height:1.45;color:var(--ink-70);max-width:60ch}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,max-content));gap:6px 36px}
+.defs div{display:grid;gap:2px}
+.defs b{font-weight:400;font-size:15px}
+.strip{max-width:720px}
+.strip svg{width:100%;height:auto;display:block;overflow:visible}
+
+/* panels */
+.panels{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px;padding-block:32px 64px}
+.panel{grid-column:span 12;border:var(--rule);background:var(--paper);padding:28px 30px;display:grid;gap:16px;align-content:start;transition:background .15s ease;min-width:0}
+.panel:hover{background:var(--deep)}
+.panel.w-wide{grid-column:span 7}.panel.w-narrow{grid-column:span 5}.panel.w-half{grid-column:span 6}.panel.w-third{grid-column:span 4}
+@media (max-width:960px){.panel.w-wide,.panel.w-narrow,.panel.w-half,.panel.w-third{grid-column:span 12}}
+@media (max-width:560px){.panel{padding:22px 18px}}
+.panel.dragging{opacity:.4}.panel.dropzone{outline:2px dashed var(--wine);outline-offset:-2px}
+.ptop{display:grid;gap:6px}
+.ptop h2{font-size:22px;font-weight:500;line-height:1.2;letter-spacing:-.005em}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border:var(--rule);display:inline-block;color:var(--ink-70)}
+.chip.flag{border-color:var(--neg);color:var(--neg)}
+.tools{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border-bottom:var(--rule);padding-bottom:12px}
+.tools .handle{cursor:grab;font-family:var(--mono);font-size:11px;color:var(--ink-50);margin-right:auto;letter-spacing:.1em;text-transform:uppercase}
+.body p+p{margin-top:10px}
+.body ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.body li{display:grid;grid-template-columns:34px 1fr;align-items:baseline}
+.body li .c{font-family:var(--mono);font-size:11px;color:var(--wine);letter-spacing:.06em}
+.kpis{display:grid;grid-template-columns:repeat(var(--kc,3),minmax(0,1fr));border-top:var(--rule);border-left:var(--rule)}
+.kpi{border-right:var(--rule);border-bottom:var(--rule);padding:18px 18px 16px;display:grid;gap:6px;align-content:start}
+.kpi .v{font-size:clamp(28px,3.4vw,44px);line-height:1;letter-spacing:-.02em;font-weight:400}
+.kpi .v.long{font-size:28px}
+@media (max-width:960px){.kpis{--kc:2!important}}
+@media (max-width:480px){.kpis{--kc:1!important}}
+.kpi .l{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-70)}
+.kpi .d{font-size:13px;color:var(--ink-70)}
+.aside{border-left:2px solid var(--wine);padding-left:18px;font-size:14px;color:var(--ink-70)}
+.aside.flag{border-left-color:var(--neg)}
+.aside .meta{display:block;margin-bottom:2px}
+.src{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-50);border-top:var(--rule);padding-top:10px}
+.cbox{position:relative;height:300px}
+.cbox.h{height:auto}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-70)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+/* carousel */
+.car{display:grid;gap:12px}
+.car .frame{background:var(--deep);aspect-ratio:16/10;max-width:100%;display:grid;place-items:center;overflow:hidden;border:var(--rule)}
+.car .frame img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.car .empty{width:100%;height:100%;background:repeating-linear-gradient(135deg,rgba(23,20,19,.04) 0 8px,rgba(23,20,19,.09) 8px 16px);display:grid;place-items:center}
+.car .ctl{display:flex;align-items:center;gap:8px}
+.car .ctl .count{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--ink-50);margin-left:auto}
+.car .cap{font-size:14px;color:var(--ink-70);min-height:2.9em}
+.car .dots{display:flex;gap:6px}
+.car .dots button{width:9px;height:9px;padding:0;border:1px solid var(--wine);background:transparent;cursor:pointer}
+.car .dots button[aria-current="true"]{background:var(--wine)}
+/* editor */
+.editor{display:grid;gap:14px;border:1px solid var(--wine);padding:16px;background:var(--paper)}
+.editor h3{font-size:18px;font-weight:500}
+.tblx{overflow-x:auto}
+.tblx table{border-collapse:collapse}
+.tblx td{padding:2px}
+.tblx input{min-width:92px;min-height:34px;padding:4px 6px}
+.tblx tr:first-child input{font-family:var(--mono);font-size:11px;background:var(--deep)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.slideed{display:grid;grid-template-columns:96px 1fr auto;gap:10px;align-items:center;border-bottom:var(--rule);padding-bottom:8px}
+.slideed img{width:96px;height:60px;object-fit:cover;border:var(--rule)}
+.kped{display:grid;grid-template-columns:1fr 140px 1fr auto;gap:8px;align-items:end}
+@media (max-width:560px){.kped{grid-template-columns:1fr 1fr}.slideed{grid-template-columns:72px 1fr}}
+.addbar{grid-column:span 12;border:1px dashed var(--ink-20);padding:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.help{grid-column:span 12;background:var(--deep);border:var(--rule);padding:24px 30px;display:grid;gap:10px}
+.help ol{margin:0;padding-left:20px;display:grid;gap:4px;font-size:14px;color:var(--ink-70)}
+/* edit data table */
+.dt{padding-block:24px 64px;display:grid;gap:28px}
+.dt section{display:grid;gap:10px}
+.dt h2{font-size:26px;font-weight:500;letter-spacing:-.01em}
+.dtab{width:100%;border-collapse:collapse}
+.dtab th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-50);font-weight:400;text-align:left;border-bottom:2px solid var(--ink);padding:8px 8px 8px 0}
+.dtab td{border-bottom:var(--rule);padding:6px 8px 6px 0;vertical-align:top;font-size:14px}
+.dtab td:first-child{width:28%;color:var(--ink-70)}
+.dtab td .pp{font-family:var(--mono);font-size:10.5px;color:var(--wine);letter-spacing:.06em}
+.dtab input,.dtab textarea{width:100%;border:var(--rule);padding:6px 8px;background:var(--paper)}
+.dtab textarea{min-height:70px}
+.dtwrap{overflow-x:auto}
+footer{background:var(--wine);color:rgba(255,255,255,.8);font-size:13px}
+footer .wrap{padding-block:36px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer .meta{color:rgba(255,255,255,.55)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (max-width:560px){.head h1{font-size:32px}.lede{font-size:18px}.brand .m{display:none}}
+</style>
+
+<section id="login" aria-labelledby="lg-h">
+  <div class="box" id="lg-form" role="form" aria-labelledby="lg-h">
+    <img src="/*LOGO*/" alt="Takshashila Institution">
+    <div class="mono" style="color:rgba(255,255,255,.55)">Takshashila Institution · Confidential</div>
+    <h1 id="lg-h">TILN Board <em>Meeting</em></h1>
+    <div><label for="lg-user">Login</label><input id="lg-user" name="username" autocomplete="username" required></div>
+    <div><label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required></div>
+    <div><button class="btn gold" type="button" id="lg-btn">Sign in →</button></div>
+    <p class="err" id="lg-err" role="alert"></p>
+    <noscript><p class="err">This page needs JavaScript to sign in.</p></noscript>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <header class="nav">
+    <div class="wrap">
+      <div class="row1">
+        <div class="brand"><img src="/*LOGO*/" alt=""><div><div class="n">Takshashila Institution</div><div class="m">Board dashboard</div></div></div>
+        <div class="navr">
+          <select id="meet" aria-label="Board meeting"></select>
+          <button class="btn sm gold" id="edit-toggle" aria-pressed="false">Edit mode: off</button>
+          <button class="lnk" id="signout">Sign out</button>
+        </div>
+      </div>
+      <nav class="tabs" role="tablist" id="tabs" aria-label="Circles"></nav>
+    </div>
+  </header>
+  <div class="editband" id="editband" hidden>
+    <div class="wrap">
+      <div class="bar">
+        <span class="msg">Edit mode is a preview. Changes are kept only when made in the meeting sheet: edit there, or copy your tab's rows from here into it.</span>
+        <a class="btn sm" id="sheet-link" href="#" target="_blank" rel="noopener" hidden>Edit in the meeting sheet ↗</a>
+        <button class="btn sm ghost" data-act="show" data-sub="sub-rows">Copy this tab as sheet rows</button>
+        <button class="btn sm ghost" data-act="show" data-sub="sub-export">Export</button>
+        <button class="btn sm ghost" data-act="show" data-sub="sub-import">Import</button>
+      </div>
+      <div class="sub" id="sub-rows" hidden>
+        <p style="font-size:14px;color:var(--ink-70)">These rows match your circle's tab in the meeting sheet. In the sheet, clear columns A to J from row 5 down, click cell A5 and paste.</p>
+        <div class="row"><button class="btn sm" data-act="rows-copy">Copy rows</button></div>
+        <div class="f"><textarea id="rows-text" readonly aria-label="Sheet rows"></textarea></div>
+      </div>
+      <div class="sub" id="sub-export" hidden>
+        <p style="font-size:14px;color:var(--ink-70)">The whole meeting, encrypted with the dashboard password. Save it as <span class="mono" style="text-transform:none;letter-spacing:0">data/&lt;meeting&gt;/meeting.json</span> or keep it as a backup.</p>
+        <div class="row"><button class="btn sm" data-act="export-copy">Copy</button><button class="btn sm ghost" data-act="export-dl">Download file</button></div>
+        <div class="f"><textarea id="exp-text" readonly aria-label="Exported data"></textarea></div>
+      </div>
+      <div class="sub" id="sub-import" hidden>
+        <div class="f"><label for="imp-text">Paste an exported meeting (encrypted or plain JSON)</label><textarea id="imp-text"></textarea></div>
+        <div class="row"><button class="btn sm" data-act="import">Load into this page</button><input type="file" id="imp-file" accept=".json,application/json" aria-label="Import file"></div>
+      </div>
+      <div class="sub" id="sheet-warn" hidden></div>
+      <div class="status" id="status" role="status"></div>
+    </div>
+  </div>
+  <div class="archband" id="archband" hidden><div class="wrap"><span id="arch-msg"></span><button class="btn sm gold" data-act="to-current">Go to the current meeting →</button></div></div>
+  <main id="view"></main>
+  <footer><div class="wrap"><span>Takshashila Institution · TILN board dashboard · Confidential: for board members and circle leads.</span><span class="meta" id="foot-meta"></span></div></footer>
+</div>
+
+<script>
+window.addEventListener("error", function(e){ var el = document.getElementById("lg-err"); if (el && !document.getElementById("login").hidden) el.textContent = "The page hit an error: " + (e.message || "unknown") + ". Please send this message to the dashboard owner."; });
+window.addEventListener("unhandledrejection", function(e){ var el = document.getElementById("lg-err"); if (el && !document.getElementById("login").hidden) el.textContent = "The page hit an error: " + ((e.reason && e.reason.message) || e.reason || "unknown") + "."; });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+"use strict";
+const SEED = /*SEED*/null;
+const SALT_B64 = "/*SALT*/", ITER = /*ITER*/;
+const USER = "takshashila";
+const TABS = ["overview","ps","rs","md","nw","fn","data"];
+const TABNAMES = {overview:"Overview",ps:"Policy School",rs:"Research",md:"Media",nw:"Network",fn:"Finance",data:"Edit Data"};
+const PAL = ["#620d3c","#f1a222","#2f6b6b","#b8809f","#4a5a7a","#a8703a"];
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const S = { meetings:{}, index:[], remoteStale:{}, cur:null, tab:"overview", edit:false, editing:null, key:null, car:{}, armed:null, remote:false };
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const b64 = u8 => { let s = ""; u8.forEach(b => s += String.fromCharCode(b)); return btoa(s); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const ss = { get(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ sessionStorage.setItem(k,v); }catch(e){} }, del(k){ try{ sessionStorage.removeItem(k); }catch(e){} } };
+const ls = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
+const clone = o => JSON.parse(JSON.stringify(o));
+const M = () => S.meetings[S.cur];
+const isArchived = () => S.cur !== latestId();
+function prevMeeting(id){ const i = S.index.findIndex(x => x.id === id); return i > 0 ? S.index[i-1] : null; }
+const mlabel = e => dfmt(e.date) + (e.window_start ? " · " + MON[dt(e.window_start).getMonth()] + " " + dt(e.window_start).getFullYear() + " – " + MON[dt(e.window_end).getMonth()] + " " + dt(e.window_end).getFullYear() : "");
+
+/* ---------- crypto ---------- */
+async function deriveKey(pw){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt:unb64(SALT_B64), iterations:ITER, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, true, ["encrypt","decrypt"]);
+}
+async function decrypt(blob){ const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:unb64(blob.iv)}, S.key, unb64(blob.ct)); return JSON.parse(new TextDecoder().decode(pt)); }
+async function encrypt(obj){ const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM", iv}, S.key, new TextEncoder().encode(JSON.stringify(obj))));
+  return {v:1, iv:b64(iv), ct:b64(ct)}; }
+
+/* ---------- login ---------- */
+function addMeeting(c){ S.meetings[c.meeting.id] = c; addIndex({id:c.meeting.id, date:c.meeting.date, window_start:c.meeting.window_start, window_end:c.meeting.window_end}); }
+function addIndex(e){ const i = S.index.findIndex(x => x.id === e.id); if (i >= 0) S.index[i] = {...S.index[i], ...e}; else S.index.push(e); S.index.sort((a,b) => a.date < b.date ? -1 : 1); }
+const latestId = () => S.index.length ? S.index[S.index.length-1].id : null;
+async function startWithKey(){
+  const seed = await decrypt(SEED);
+  (seed.meetings || (seed.meeting ? [seed] : [])).forEach(addMeeting);
+  await loadManifest();
+  S.cur = latestId();
+  if (!S.cur) throw new Error("No meetings have been published yet");
+  const h = location.hash.slice(1).split("-");
+  if (S.index.some(x => x.id === h.slice(1).join("-"))) S.cur = h.slice(1).join("-");
+  if (TABS.includes(h[0])) S.tab = h[0];
+  await ensure(S.cur);
+  $("#login").hidden = true; $("#app").hidden = false;
+  render();
+}
+async function doLogin(){
+  const err = $("#lg-err"); err.textContent = ""; $("#lg-btn").disabled = true; $("#lg-btn").textContent = "Checking…";
+  let stage = "login";
+  try {
+    if (!window.crypto || !crypto.subtle) { stage = "browser"; throw new Error("This browser cannot decrypt the page (Web Crypto unavailable)."); }
+    if ($("#lg-user").value.trim().toLowerCase() !== USER) throw new Error("user");
+    S.key = await deriveKey($("#lg-pass").value.trim());
+    try { await decrypt(SEED); } catch(x){ throw new Error("password"); }
+    stage = "open";
+    await startWithKey();
+    try { ss.set("tiln-k", b64(new Uint8Array(await crypto.subtle.exportKey("raw", S.key)))); } catch(x){}
+  } catch(x){ S.key = null; console.error("Sign-in:", stage, x);
+    err.textContent = stage === "login" ? "Login or password is incorrect. Check both and try again." : "Signed in, but the page could not open: " + (x && x.message || x) + ". Reload and try again."; }
+  $("#lg-btn").disabled = false; $("#lg-btn").textContent = "Sign in →";
+}
+$("#lg-btn").addEventListener("click", doLogin);
+["#lg-user","#lg-pass"].forEach(s => $(s).addEventListener("keydown", e => { if (e.key === "Enter"){ e.preventDefault(); doLogin(); } }));
+$("#signout").onclick = () => { ss.del("tiln-k"); location.hash = ""; location.reload(); };
+(async () => { const k = ss.get("tiln-k"); if (!k) return;
+  try { S.key = await crypto.subtle.importKey("raw", unb64(k), "AES-GCM", true, ["encrypt","decrypt"]); await startWithKey(); } catch(e){ ss.del("tiln-k"); } })();
+
+/* ---------- remote data: data/manifest.json lists meetings; data/<id>/meeting.json holds each one ---------- */
+async function getJSON(url){ const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000);
+  try { const r = await fetch(url, {cache:"no-store", signal:ac.signal}); if (!r.ok || !(r.headers.get("content-type") || "").includes("json")) return null; return await r.json(); }
+  catch(e){ return null; } finally { clearTimeout(tm); } }
+async function loadManifest(){
+  const man = await getJSON("data/manifest.json");
+  if (!man || !Array.isArray(man.meetings)) return;
+  S.remote = true; man.meetings.forEach(m => { if (m.id && m.date) addIndex(m); });
+}
+async function ensure(id){
+  if (S.meetings[id] && !S.remoteStale[id]) return;
+  const blob = await getJSON(`data/${id}/meeting.json`);
+  if (blob){ try { addMeeting(await decrypt(blob)); } catch(e){ console.error("Could not open meeting", id, e); } }
+  if (!S.meetings[id]) throw new Error("Meeting " + id + " could not be loaded");
+}
+
+/* ---------- dates ---------- */
+const dt = s => new Date(s + "T00:00:00");
+const dfmt = (s, withYear=true) => { const d = dt(s); return d.getDate() + " " + MON[d.getMonth()] + (withYear ? " " + d.getFullYear() : ""); };
+const days = (a,b) => Math.round((dt(b) - dt(a)) / 864e5) + 1;
+function windowText(m){ const n = days(m.window_start, m.window_end); return {range: dfmt(m.window_start) + " – " + dfmt(m.window_end), n, months:(n/30.44).toFixed(1)}; }
+
+/* coverage strip: previous window, gap, this window */
+function strip(m){
+  const pm = prevMeeting(m.id); const p = pm && pm.window_start ? {label: MON[dt(pm.date).getMonth()] + " " + dt(pm.date).getFullYear() + " meeting", window_start: pm.window_start, window_end: pm.window_end} : null; if (!p) return "";
+  const a = dt(p.window_start), z = dt(m.window_end), W = 720, pad = 2, span = z - a;
+  const x = d => pad + (dt(d) - a) / span * (W - 2*pad);
+  const gap = days(p.window_end, m.window_start) - 2;
+  let ticks = ""; const t = new Date(a.getFullYear(), a.getMonth(), 1);
+  while (t <= z){ if (t >= a){ const xx = pad + (t - a)/span*(W-2*pad); ticks += `<line x1="${xx}" x2="${xx}" y1="30" y2="36" stroke="rgba(23,20,19,.3)"/><text x="${xx+2}" y="48" font-family="Roboto Mono, monospace" font-size="10" fill="rgba(23,20,19,.6)">${MON[t.getMonth()]}${t.getMonth()===0?" "+String(t.getFullYear()).slice(2):""}</text>`; } t.setMonth(t.getMonth()+1); }
+  const pe = new Date(dt(p.window_end).getTime() + 864e5).toISOString().slice(0,10);
+  return `<div class="strip"><svg viewBox="0 0 ${W} 54" role="img" aria-label="Reporting windows: previous ${esc(p.label)} and this meeting">
+    <rect x="${x(p.window_start)}" y="8" width="${x(pe)-x(p.window_start)}" height="20" fill="#dbb8c8"/>
+    <text x="${x(p.window_start)+6}" y="22" font-family="Roboto Mono, monospace" font-size="10" fill="#171413">${esc(p.label.toUpperCase())}</text>
+    ${gap > 0 ? `<rect x="${x(pe)}" y="8" width="${x(m.window_start)-x(pe)}" height="20" fill="url(#hatch)"/>` : ""}
+    <rect x="${x(m.window_start)}" y="8" width="${x(m.window_end)-x(m.window_start)}" height="20" fill="#620d3c"/>
+    <text x="${x(m.window_start)+6}" y="22" font-family="Roboto Mono, monospace" font-size="10" fill="#fff">THIS MEETING</text>
+    <defs><pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f7f5f2"/><line x1="0" y1="0" x2="0" y2="8" stroke="#a3282d" stroke-width="2"/></pattern></defs>
+    ${ticks}</svg>${gap > 0 ? `<div class="meta" style="margin-top:4px;color:var(--neg)">Not covered by either meeting: ${dfmt(pe)} – ${dfmt(new Date(dt(m.window_start).getTime()-864e5).toISOString().slice(0,10))} (${gap} days)</div>` : ""}</div>`;
+}
+
+/* ---------- rendering ---------- */
+const charts = [];
+function render(){
+  while (charts.length) charts.pop().destroy();
+  const m = M();
+  $("#tabs").innerHTML = TABS.map(t => `<button role="tab" aria-selected="${S.tab===t}" data-tab="${t}">${TABNAMES[t]}</button>`).join("");
+  const cur = latestId(), arch = S.index.filter(x => x.id !== cur).reverse();
+  $("#meet").innerHTML = `<optgroup label="Current">${S.index.filter(x => x.id === cur).map(e => `<option value="${e.id}" ${e.id===S.cur?"selected":""}>${mlabel(e)}</option>`).join("")}</optgroup>` +
+    (arch.length ? `<optgroup label="Archive">${arch.map(e => `<option value="${e.id}" ${e.id===S.cur?"selected":""}>${mlabel(e)}</option>`).join("")}</optgroup>` : "");
+  if (isArchived()){ S.edit = false; }
+  $("#archband").hidden = !isArchived();
+  if (isArchived()) $("#arch-msg").textContent = "Archived meeting of " + dfmt(M().meeting.date) + ". Read-only.";
+  $("#edit-toggle").disabled = isArchived(); $("#edit-toggle").title = isArchived() ? "Archived meetings cannot be edited" : "";
+  $("#edit-toggle").textContent = "Edit mode: " + (S.edit ? "on" : "off"); $("#edit-toggle").setAttribute("aria-pressed", S.edit);
+  $("#editband").hidden = !S.edit;
+  const su = M().meeting.sheet_url; $("#sheet-link").hidden = !su; if (su) $("#sheet-link").href = su;
+  const W = M().warnings || []; $("#sheet-warn").hidden = !W.length;
+  if (W.length) $("#sheet-warn").innerHTML = `<div class="meta" style="color:var(--neg)">Sheet checks · ${W.length} row${W.length>1?"s":""} could not be shown</div><ul style="margin:0;padding-left:18px;font-size:14px">${W.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  $("#foot-meta").textContent = S.index.length + " meeting" + (S.index.length === 1 ? "" : "s") + " on record" + (S.remote ? " · synced from the meeting sheets" : "");
+  $("#view").innerHTML = S.tab === "data" ? dataView() : tabView(S.tab);
+  if (S.tab !== "data") M().tabs[S.tab].panels.forEach(p => { if (p.type === "chart") drawChart(p); });
+}
+
+function head(tabKey){
+  const m = M().meeting, w = windowText(m), tab = M().tabs[tabKey];
+  const circle = TABNAMES[tabKey];
+  const meetEdit = S.edit && tabKey === "overview" ? `<div class="editor"><h3>Meeting details</h3><div class="fields">
+      <div class="f"><label for="m-date">Meeting date</label><input type="date" id="m-date" data-mpath="date" value="${esc(m.date)}"></div>
+      <div class="f"><label for="m-ws">Reporting window from</label><input type="date" id="m-ws" data-mpath="window_start" value="${esc(m.window_start)}"></div>
+      <div class="f"><label for="m-we">Reporting window to</label><input type="date" id="m-we" data-mpath="window_end" value="${esc(m.window_end)}"></div>
+      </div></div>` : "";
+  const pm = prevMeeting(m.id);
+  const intro = S.edit ? `<div class="f"><label for="t-intro">Tab introduction</label><textarea id="t-intro" data-tpath="intro" style="min-height:60px">${esc(tab.intro)}</textarea></div>` : `<p class="lede">${esc(tab.intro)}</p>`;
+  return `<div class="head"><div class="eyebrow">${esc(circle)} · ${esc(m.title)}</div>
+    <h1>Board meeting, <em>${dfmt(m.date)}</em></h1>${intro}
+    <div class="defs">
+      <div><span class="meta">Reporting window</span><b>${w.range}</b></div>
+      <div><span class="meta">Duration</span><b>${w.n} days · ${w.months} months</b></div>
+      ${pm && pm.window_start ? `<div><span class="meta">Previous meeting</span><b>${dfmt(pm.date)} · ${dfmt(pm.window_start)} – ${dfmt(pm.window_end)}</b></div>` : `<div><span class="meta">Previous meeting</span><b>None on record</b></div>`}
+    </div>${strip(m)}${meetEdit}</div>`;
+}
+
+function tabView(t){
+  const panels = M().tabs[t].panels;
+  const help = S.edit && t === "overview" ? `<div class="help"><div class="eyebrow">How to update this dashboard</div><ol>
+    <li>The meeting's Google Sheet is the record. Circle leads fill it in there, usually each their own tab, though anyone can edit any tab; the dashboard updates after the sync.</li>
+    <li>Edit mode here is for trying layouts: change, add, move or delete panels and see the result at once.</li>
+    <li>To keep a change, press Copy this tab as sheet rows and paste the rows into your tab in the sheet.</li>
+    <li>For a new meeting, copy the latest meeting sheet, update its Meeting tab and add it to the index sheet. Earlier meetings move to the archive automatically.</li></ol></div>` : "";
+  return `<div class="wrap">${head(t)}<div class="panels" id="panels">${help}${panels.map((p,i) => panelHTML(p,i,panels.length)).join("")}
+    ${S.edit ? `<div class="addbar"><span class="meta" style="margin-right:auto">Add a panel to ${esc(TABNAMES[t])}</span>
+      <button class="btn sm" data-act="add" data-type="text">+ Text and figures</button>
+      <button class="btn sm" data-act="add" data-type="chart">+ Chart from a table</button>
+      <button class="btn sm" data-act="add" data-type="carousel">+ Picture carousel</button></div>` : ""}</div>${t === "overview" ? archiveList() : ""}</div>`;
+}
+function archiveList(){
+  const cur = latestId();
+  return `<section style="padding-block:0 64px"><div class="eyebrow" style="margin-bottom:12px">All board meetings</div><div class="rowlist">${[...S.index].reverse().map(e => {
+    const n = e.window_start ? days(e.window_start, e.window_end) : null;
+    return `<button class="ml" data-act="open-meeting" data-mid="${e.id}" ${e.id === S.cur ? 'aria-current="true"' : ""}><span class="t">Board meeting, ${dfmt(e.date)}</span><span class="meta">${e.id === cur ? "Current" : "Archived"}${e.id === S.cur ? " · open" : " →"}</span>
+      <span class="s">${e.window_start ? `Reporting window ${dfmt(e.window_start)} – ${dfmt(e.window_end)} · ${n} days (${(n/30.44).toFixed(1)} months)` : ""}</span></button>`; }).join("")}</div></section>`;
+}
+
+function bodyHTML(txt){
+  if (!txt) return "";
+  let n = 0;
+  return txt.split(/\n\s*\n/).map(block => { const lines = block.split("\n").filter(l => l.trim());
+    if (lines.length && lines.every(l => /^\s*[-•]\s+/.test(l))) return `<ul>${lines.map(l => `<li><span class="c">${String(++n).padStart(2,"0")}</span><span>${esc(l.replace(/^\s*[-•]\s+/,""))}</span></li>`).join("")}</ul>`;
+    return `<p>${esc(lines.join(" "))}</p>`; }).join("");
+}
+
+function panelHTML(p, i, n){
+  const tools = S.edit ? `<div class="tools" role="toolbar" aria-label="Panel tools"><span class="handle" draggable="true" data-drag="${p.id}" title="Drag to move">⠿ ${p.type === "text" ? "Text and figures" : p.type === "chart" ? "Chart" : "Carousel"}</span>
+      <button class="btn sm ghost" data-act="edit" data-id="${p.id}">${S.editing===p.id?"Close editor":"Edit"}</button>
+      <button class="btn sm ghost" data-act="up" data-id="${p.id}" ${i===0?"disabled":""} aria-label="Move up">↑</button>
+      <button class="btn sm ghost" data-act="down" data-id="${p.id}" ${i===n-1?"disabled":""} aria-label="Move down">↓</button>
+      <button class="btn sm ghost" data-act="dup" data-id="${p.id}">Duplicate</button>
+      <button class="btn sm danger ${S.armed===p.id?"armed":""}" data-act="del" data-id="${p.id}">${S.armed===p.id?"Confirm delete":"Delete"}</button></div>` : "";
+  let inner = "";
+  if (p.type === "text"){
+    const kn = p.kpis?.length || 0, kc = kn <= 4 ? kn : kn % 4 === 0 ? 4 : 3;
+    inner = (kn ? `<div class="kpis" style="--kc:${kc}">${p.kpis.map(k => `<div class="kpi"><div class="v ${String(k.value).length>9?"long":""}">${esc(k.value || "—")}</div><div class="l">${esc(k.label)}</div>${k.note?`<div class="d">${esc(k.note)}</div>`:""}</div>`).join("")}</div>` : "") + (p.body ? `<div class="body">${bodyHTML(p.body)}</div>` : "");
+  } else if (p.type === "chart"){
+    const series = (p.table[0] || []).slice(1);
+    const rows = Math.max(1, p.table.length - 1);
+    const h = p.horizontal && (p.chartType==="bar"||p.chartType==="stacked") ? Math.max(140, rows*46 + 50) : 300;
+    inner = (series.length > 1 ? `<div class="legend">${series.map((s,k) => `<span><i style="background:${PAL[k%PAL.length]}"></i>${esc(s)}</span>`).join("")}</div>` : "") +
+      `<div class="cbox" style="height:${h}px"><canvas id="cv-${p.id}" role="img" aria-label="${esc(p.title)}"></canvas></div>`;
+  } else {
+    const sl = p.slides || [], k = Math.min(S.car[p.id] || 0, Math.max(0, sl.length-1)); S.car[p.id] = k;
+    const cur = sl[k];
+    inner = `<div class="car" data-car="${p.id}"><div class="frame">${cur ? `<img src="${cur.img}" alt="${esc(cur.caption)}">` : `<div class="empty"><span class="meta">No pictures yet</span></div>`}</div>
+      ${sl.length > 1 ? `<div class="ctl"><button class="btn sm ghost" data-act="prev" data-id="${p.id}" aria-label="Previous picture">←</button><button class="btn sm ghost" data-act="next" data-id="${p.id}" aria-label="Next picture">→</button>
+        <div class="dots">${sl.map((_,j) => `<button data-act="go" data-id="${p.id}" data-k="${j}" aria-current="${j===k}" aria-label="Picture ${j+1}"></button>`).join("")}</div>
+        <span class="count">${String(k+1).padStart(2,"0")} / ${String(sl.length).padStart(2,"0")}</span></div>` : ""}
+      <p class="cap">${esc(cur?.caption || "")}</p></div>`;
+  }
+  const note = p.note ? `<div class="aside ${p.flagged?"flag":""}"><span class="meta">${p.flagged?"Data note":"Note"}</span>${esc(p.note)}</div>` : "";
+  return `<article class="panel w-${p.width||"full"}" data-pid="${p.id}">${tools}
+    <div class="ptop">${p.eyebrow||p.flagged ? `<div class="eyebrow">${esc(p.eyebrow)} ${p.flagged?'<span class="chip flag">Check figures</span>':""}</div>` : ""}<h2>${esc(p.title)}</h2></div>
+    ${S.editing===p.id ? editorHTML(p) : ""}${inner}${note}${p.source?`<div class="src">Source: ${esc(p.source)}</div>`:""}</article>`;
+}
+
+/* ---------- panel editor ---------- */
+const fp = (p, path) => `data-pid="${p.id}" data-path="${path}"`;
+function editorHTML(p){
+  const common = `<div class="fields">
+    <div class="f"><label for="e-t-${p.id}">Title</label><input id="e-t-${p.id}" ${fp(p,"title")} value="${esc(p.title)}"></div>
+    <div class="f"><label for="e-e-${p.id}">Label above title</label><input id="e-e-${p.id}" ${fp(p,"eyebrow")} value="${esc(p.eyebrow)}"></div>
+    <div class="f"><label for="e-w-${p.id}">Width</label><select id="e-w-${p.id}" ${fp(p,"width")} data-rerender="1">${[["full","Full width"],["wide","Wide (7/12)"],["narrow","Narrow (5/12)"],["half","Half"],["third","Third"]].map(([v,l]) => `<option value="${v}" ${p.width===v?"selected":""}>${l}</option>`).join("")}</select></div>
+    <div class="f"><label for="e-s-${p.id}">Source</label><input id="e-s-${p.id}" ${fp(p,"source")} value="${esc(p.source)}"></div></div>`;
+  const tail = `<div class="fields"><div class="f"><label for="e-n-${p.id}">Note under the panel</label><textarea id="e-n-${p.id}" ${fp(p,"note")} style="min-height:60px">${esc(p.note)}</textarea></div>
+    <div class="f"><label for="e-fl-${p.id}">Figures need checking</label><select id="e-fl-${p.id}" ${fp(p,"flagged")} data-rerender="1"><option value="false" ${!p.flagged?"selected":""}>No</option><option value="true" ${p.flagged?"selected":""}>Yes, flag this panel</option></select></div></div>`;
+  let mid = "";
+  if (p.type === "text"){
+    mid = `<div class="f"><label for="e-b-${p.id}">Text (start a line with "- " for a numbered point; blank line for a new paragraph)</label><textarea id="e-b-${p.id}" ${fp(p,"body")}>${esc(p.body)}</textarea></div>
+      <div class="meta">Figures</div>${(p.kpis||[]).map((k,j) => `<div class="kped">
+        <div class="f"><label for="k-l-${p.id}-${j}">Label</label><input id="k-l-${p.id}-${j}" ${fp(p,`kpis.${j}.label`)} value="${esc(k.label)}"></div>
+        <div class="f"><label for="k-v-${p.id}-${j}">Value</label><input id="k-v-${p.id}-${j}" ${fp(p,`kpis.${j}.value`)} value="${esc(k.value)}"></div>
+        <div class="f"><label for="k-n-${p.id}-${j}">Context</label><input id="k-n-${p.id}-${j}" ${fp(p,`kpis.${j}.note`)} value="${esc(k.note)}"></div>
+        <button class="btn sm danger" data-act="kpi-del" data-id="${p.id}" data-k="${j}" aria-label="Remove figure">Remove</button></div>`).join("")}
+      <div class="row"><button class="btn sm ghost" data-act="kpi-add" data-id="${p.id}">+ Add figure</button></div>`;
+  } else if (p.type === "chart"){
+    mid = `<div class="fields"><div class="f"><label for="e-ct-${p.id}">Chart type</label><select id="e-ct-${p.id}" ${fp(p,"chartType")} data-rerender="1">${[["line","Line"],["trend","Trend (line with fitted trend)"],["bar","Bar"],["stacked","Stacked bar"]].map(([v,l]) => `<option value="${v}" ${p.chartType===v?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div class="f"><label for="e-or-${p.id}">Bar direction</label><select id="e-or-${p.id}" ${fp(p,"horizontal")} data-rerender="1"><option value="false" ${!p.horizontal?"selected":""}>Vertical</option><option value="true" ${p.horizontal?"selected":""}>Horizontal</option></select></div>
+      <div class="f"><label for="e-u-${p.id}">Unit</label><input id="e-u-${p.id}" ${fp(p,"unit")} value="${esc(p.unit)}"></div></div>
+      <div class="meta">Table: first row = series names, first column = categories</div>
+      <div class="tblx"><table>${p.table.map((r,ri) => `<tr>${r.map((c,ci) => `<td><input ${fp(p,`table.${ri}.${ci}`)} data-rerender="1" value="${esc(c)}" aria-label="Row ${ri+1}, column ${ci+1}"></td>`).join("")}</tr>`).join("")}</table></div>
+      <div class="row"><button class="btn sm ghost" data-act="row-add" data-id="${p.id}">+ Row</button><button class="btn sm ghost" data-act="row-del" data-id="${p.id}">− Row</button>
+        <button class="btn sm ghost" data-act="col-add" data-id="${p.id}">+ Series</button><button class="btn sm ghost" data-act="col-del" data-id="${p.id}">− Series</button></div>
+      <div class="f"><label for="e-paste-${p.id}">Or paste cells from Excel or Google Sheets</label><textarea id="e-paste-${p.id}" style="min-height:80px" placeholder="Cohort&#9;DFA&#9;APP&#10;Jan 26&#9;239&#9;38"></textarea></div>
+      <div class="row"><button class="btn sm" data-act="paste" data-id="${p.id}">Replace table with pasted cells</button></div>`;
+  } else {
+    mid = `<div class="meta">Pictures, shown in this order</div>${(p.slides||[]).map((s,j) => `<div class="slideed"><img src="${s.img}" alt="">
+        <div class="f"><label for="s-c-${p.id}-${j}">Caption</label><input id="s-c-${p.id}-${j}" ${fp(p,`slides.${j}.caption`)} data-rerender="1" value="${esc(s.caption)}"></div>
+        <div class="row"><button class="btn sm ghost" data-act="sl-up" data-id="${p.id}" data-k="${j}" aria-label="Move picture earlier">↑</button><button class="btn sm danger" data-act="sl-del" data-id="${p.id}" data-k="${j}">Remove</button></div></div>`).join("")}
+      <div class="f"><label for="s-add-${p.id}">Add pictures (JPEG or PNG; resized to 1400px)</label><input type="file" id="s-add-${p.id}" accept="image/*" multiple data-imgadd="${p.id}"></div>`;
+  }
+  return `<div class="editor"><h3>Edit panel</h3>${common}${mid}${tail}<div class="row"><button class="btn sm" data-act="edit" data-id="${p.id}">Done</button></div></div>`;
+}
+
+/* ---------- charts ---------- */
+const num = v => { const s = String(v ?? "").replace(/[₹,%\s]/g,"").replace(/(lakh|L|k|cr)$/i,""); const n = parseFloat(s); return isNaN(n) ? null : n; };
+function fit(ys){ const pts = ys.map((y,i) => [i,y]).filter(p => p[1] != null); if (pts.length < 2) return ys.map(() => null);
+  const n = pts.length, sx = pts.reduce((a,p)=>a+p[0],0), sy = pts.reduce((a,p)=>a+p[1],0), sxx = pts.reduce((a,p)=>a+p[0]*p[0],0), sxy = pts.reduce((a,p)=>a+p[0]*p[1],0);
+  const b = (n*sxy - sx*sy) / (n*sxx - sx*sx), a0 = (sy - b*sx)/n; return ys.map((_,i) => Math.round((a0 + b*i)*100)/100); }
+const endLabels = { id:"endLabels", afterDatasetsDraw(c, _a, o){ if (!o.on) return; const ctx = c.ctx; ctx.save(); ctx.font = "11px 'Roboto Mono', monospace";
+  c.data.datasets.forEach((d,i) => { if (d._trend) return; const meta = c.getDatasetMeta(i); const pts = meta.data.filter((_,k) => d.data[k] != null); const pt = pts[pts.length-1]; if (!pt) return;
+    ctx.fillStyle = d.borderColor; ctx.fillText(d.label, pt.x + 8, pt.y + 4); }); ctx.restore(); } };
+const barValues = { id:"barValues", afterDatasetsDraw(c, _a, o){ if (!o.on) return; const ctx = c.ctx; ctx.save(); ctx.font = "11px 'Roboto Mono', monospace"; ctx.fillStyle = "rgba(23,20,19,.7)";
+  const hz = c.options.indexAxis === "y";
+  c.data.datasets.forEach((d,i) => c.getDatasetMeta(i).data.forEach((el,k) => { const v = d.data[k]; if (v == null) return; const t = v.toLocaleString("en-IN");
+    if (hz){ ctx.textAlign = "left"; ctx.fillText(t, el.x + 6, el.y + 4); } else { ctx.textAlign = "center"; ctx.fillText(t, el.x, el.y - 6); } })); ctx.restore(); } };
+const stackValues = { id:"stackValues", afterDatasetsDraw(c, _a, o){ if (!o.on) return; const ctx = c.ctx; ctx.save(); ctx.font = "11px 'Roboto Mono', monospace"; ctx.textAlign = "center";
+  const hz = c.options.indexAxis === "y";
+  c.data.datasets.forEach((d,i) => c.getDatasetMeta(i).data.forEach((el,k) => { const v = d.data[k]; if (v == null || !v) return;
+    const size = hz ? Math.abs(el.x - el.base) : Math.abs(el.base - el.y); if (size < 26) return;
+    ctx.fillStyle = i === 0 || i === 2 || i === 4 ? "#fff" : "#171413"; ctx.fillText(v.toLocaleString("en-IN"), hz ? (el.x + el.base)/2 : el.x, hz ? el.y + 4 : (el.y + el.base)/2 + 4); })); ctx.restore(); } };
+
+function drawChart(p){
+  const el = document.getElementById("cv-" + p.id); if (!el || !window.Chart) return;
+  const head = p.table[0] || [], rows = p.table.slice(1);
+  const labels = rows.map(r => r[0]);
+  const type = p.chartType, isBar = type === "bar" || type === "stacked", hz = isBar && p.horizontal;
+  const ds = [];
+  head.slice(1).forEach((name, k) => {
+    const col = PAL[k % PAL.length], data = rows.map(r => num(r[k+1]));
+    ds.push({ label:name, data, type: isBar ? "bar" : "line", backgroundColor:col, borderColor:col,
+      borderWidth: isBar ? 0 : (col === PAL[1] ? 3 : 2), pointRadius: isBar ? 0 : 3, pointBackgroundColor:col, tension:0, maxBarThickness:44, stack: type === "stacked" ? "s" : undefined });
+    if (type === "trend") ds.push({ label:name + " trend", _trend:true, data:fit(data), type:"line", borderColor:col, borderDash:[5,4], borderWidth:1.5, pointRadius:0, backgroundColor:"transparent" });
+  });
+  const ink = "rgba(23,20,19,.55)", grid = "rgba(23,20,19,.08)", mono = {family:"'Roboto Mono', monospace", size:11};
+  const valueAxis = { beginAtZero:true, stacked: type === "stacked", grid:{color:grid}, border:{display:false}, ticks:{color:ink, font:mono} };
+  const catAxis = { stacked: type === "stacked", grid:{display:false}, border:{color:"rgba(23,20,19,.16)"}, ticks:{color:ink, font:mono, autoSkip:true, maxRotation:0} };
+  const multi = head.length > 2;
+  charts.push(new Chart(el, { type: isBar ? "bar" : "line", data:{ labels, datasets:ds },
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, indexAxis: hz ? "y" : "x",
+      layout:{ padding:{ right: (!isBar && multi) ? 64 : (isBar && !multi ? 44 : 8), top: isBar && !hz && type==="bar" ? 16 : 4 } },
+      interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{display:false}, endLabels:{on: !isBar && multi}, barValues:{on: type === "bar"}, stackValues:{on: type === "stacked"},
+        tooltip:{ backgroundColor:"#171413", cornerRadius:0, titleFont:{family:"Inter"}, bodyFont:{family:"'Roboto Mono', monospace", size:11},
+          filter: it => !it.dataset._trend, callbacks:{ label: c => `${c.dataset.label}: ${c.raw == null ? "—" : c.raw.toLocaleString("en-IN")}${p.unit ? " " + p.unit : ""}` } } },
+      scales: hz ? { x:valueAxis, y:catAxis } : { x:catAxis, y:valueAxis } },
+    plugins:[endLabels, barValues, stackValues] }));
+}
+
+/* ---------- edit data view ---------- */
+function dataView(){
+  if (isArchived()) return `<div class="wrap"><div class="head"><div class="eyebrow">Edit data</div><h1>Archived meetings are <em>read-only</em></h1><p class="lede">Corrections to an archived meeting are made in its meeting sheet, then published again.</p></div></div>`;
+  const tabs = TABS.filter(t => t !== "data");
+  const rowsFor = (t, p) => {
+    const R = [], add = (label, path, val, long) => R.push(`<tr><td>${label}</td><td>${long ? `<textarea ${fp(p,path)} data-tab="${t}" aria-label="${esc(label)}">${esc(val)}</textarea>` : `<input ${fp(p,path)} data-tab="${t}" value="${esc(val)}" aria-label="${esc(label)}">`}</td></tr>`);
+    add("Title", "title", p.title); add("Label above title", "eyebrow", p.eyebrow);
+    if (p.type === "text"){ if (p.body) add("Text", "body", p.body, true); (p.kpis||[]).forEach((k,j) => { add(`Figure ${j+1}: label`, `kpis.${j}.label`, k.label); add(`Figure ${j+1}: value`, `kpis.${j}.value`, k.value); add(`Figure ${j+1}: context`, `kpis.${j}.note`, k.note); }); }
+    if (p.type === "chart"){ p.table.forEach((r,ri) => r.forEach((c,ci) => { if (ri === 0 && ci === 0) return; add(ri === 0 ? `Series name ${ci}` : ci === 0 ? `Category ${ri}` : `${esc(r[0])} · ${esc(p.table[0][ci])}`, `table.${ri}.${ci}`, c); })); }
+    if (p.type === "carousel"){ (p.slides||[]).forEach((s,j) => add(`Picture ${j+1} caption`, `slides.${j}.caption`, s.caption)); }
+    add("Note", "note", p.note, true); add("Source", "source", p.source);
+    return R.join("");
+  };
+  return `<div class="wrap"><div class="head"><div class="eyebrow">Edit data · Board meeting ${dfmt(M().meeting.date)}</div><h1>Correct any <em>figure</em> or caption</h1>
+    <p class="lede">Every field shown on the dashboard, grouped by tab and panel. Changes apply as you leave each field; save each tab from the bar above.</p></div>
+    <div class="dt">${tabs.map(t => `<section><h2>${TABNAMES[t]}</h2>${M().tabs[t].panels.map((p,i) => `<div class="dtwrap"><table class="dtab"><tr><th colspan="2"><span class="pp">${t.toUpperCase()}.${String(i+1).padStart(2,"0")}</span> · ${esc(p.title)}</th></tr>${rowsFor(t,p)}</table></div>`).join("")}</section>`).join("")}</div></div>`;
+}
+
+/* ---------- state helpers ---------- */
+function findPanel(id){ for (const t of Object.keys(M().tabs)){ const arr = M().tabs[t].panels; const i = arr.findIndex(p => p.id === id); if (i >= 0) return {t, arr, i, p:arr[i]}; } return null; }
+function setPath(obj, path, val){ const ks = path.split("."); let o = obj; for (let i = 0; i < ks.length-1; i++){ o[ks[i]] ??= {}; o = o[ks[i]]; } o[ks[ks.length-1]] = val; }
+const newId = () => "p" + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+function blankPanel(type){
+  const base = {id:newId(), type, title:"New panel", eyebrow:"", width:"full", source:"", note:"", flagged:false};
+  if (type === "text") return {...base, body:"", kpis:[{label:"Label", value:"", note:""}]};
+  if (type === "chart") return {...base, width:"wide", chartType:"bar", horizontal:false, unit:"", table:[["Category","Series 1"],["A","10"],["B","20"]]};
+  return {...base, width:"wide", slides:[]};
+}
+const status = (msg, bad) => { const s = $("#status"); s.textContent = msg; s.classList.toggle("bad", !!bad); };
+function keepScroll(fn){ const y = window.scrollY; fn(); window.scrollTo(0, y); }
+
+/* ---------- events ---------- */
+document.addEventListener("click", async e => {
+  const tb = e.target.closest("[data-tab]"); if (tb && tb.closest("#tabs")){ S.tab = tb.dataset.tab; S.editing = null; if (S.tab === "data") S.edit = true; setHash(); render(); window.scrollTo(0,0); return; }
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id, f = id ? findPanel(id) : null;
+  if (act !== "del") S.armed = null;
+  switch (act){
+    case "edit": S.editing = S.editing === id ? null : id; break;
+    case "up": if (f.i > 0) [f.arr[f.i-1], f.arr[f.i]] = [f.arr[f.i], f.arr[f.i-1]]; break;
+    case "down": if (f.i < f.arr.length-1) [f.arr[f.i+1], f.arr[f.i]] = [f.arr[f.i], f.arr[f.i+1]]; break;
+    case "dup": { const c = clone(f.p); c.id = newId(); c.title += " (copy)"; f.arr.splice(f.i+1, 0, c); break; }
+    case "del": if (S.armed === id){ f.arr.splice(f.i, 1); S.armed = null; status("Panel deleted."); } else S.armed = id; break;
+    case "add": { const p = blankPanel(b.dataset.type); M().tabs[S.tab].panels.push(p); S.editing = p.id; break; }
+    case "prev": case "next": case "go": { const n = f.p.slides.length; S.car[id] = act === "go" ? +b.dataset.k : ((S.car[id]||0) + (act === "next" ? 1 : -1) + n) % n; break; }
+    case "kpi-add": f.p.kpis.push({label:"", value:"", note:""}); break;
+    case "kpi-del": f.p.kpis.splice(+b.dataset.k, 1); break;
+    case "row-add": f.p.table.push(f.p.table[0].map(() => "")); break;
+    case "row-del": if (f.p.table.length > 2) f.p.table.pop(); break;
+    case "col-add": f.p.table.forEach((r,i) => r.push(i === 0 ? "Series " + r.length : "")); break;
+    case "col-del": if (f.p.table[0].length > 2) f.p.table.forEach(r => r.pop()); break;
+    case "paste": { const txt = document.getElementById("e-paste-" + id).value.trim(); if (!txt){ status("Paste some cells first.", true); return; }
+      const sep = txt.includes("\t") ? "\t" : ","; const t = txt.split(/\r?\n/).map(l => l.split(sep).map(c => c.trim()));
+      const w = Math.max(...t.map(r => r.length)); f.p.table = t.map(r => { while (r.length < w) r.push(""); return r; }); status("Table replaced: " + (t.length-1) + " rows, " + (w-1) + " series."); break; }
+    case "sl-del": f.p.slides.splice(+b.dataset.k, 1); break;
+    case "sl-up": { const k = +b.dataset.k; if (k > 0) [f.p.slides[k-1], f.p.slides[k]] = [f.p.slides[k], f.p.slides[k-1]]; break; }
+    case "show": { const sub = document.getElementById(b.dataset.sub); const open = sub.hidden; document.querySelectorAll(".editband .sub").forEach(x => x.hidden = true); sub.hidden = !open;
+      if (b.dataset.sub === "sub-export" && open){ $("#exp-text").value = JSON.stringify(await encrypt(M())); }
+      if (b.dataset.sub === "sub-rows" && open){ const t = S.tab === "data" ? "overview" : S.tab; $("#rows-text").value = tabRows(t).map(r => r.map(c => String(c ?? "").replace(/[\t\n]+/g, " ")).join("\t")).join("\n"); }
+      return; }
+    case "export-copy": { const t = $("#exp-text"); try { await navigator.clipboard.writeText(t.value); status("Copied."); } catch(x){ t.select(); status("Copy blocked by the browser. The text is selected; press Ctrl/Cmd + C."); } return; }
+    case "export-dl": { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([$("#exp-text").value], {type:"application/json"})); a.download = `meeting-${S.cur}.json`; document.body.appendChild(a); a.click(); a.remove(); status("Download started. If nothing downloads, use Copy."); } catch(x){ status("Download is blocked here. Use Copy.", true); } return; }
+    case "import": return importText($("#imp-text").value);
+    case "gh-save-settings": ls.set("tiln-gh", JSON.stringify({repo:$("#gh-repo").value.trim(), branch:$("#gh-branch").value.trim() || "main", name:$("#gh-name").value.trim(), token:$("#gh-token").value.trim()})); status("GitHub settings kept in this browser."); return;
+    case "rows-copy": { const t = $("#rows-text"); try { await navigator.clipboard.writeText(t.value); status("Rows copied. Paste them at cell A5 of your tab in the meeting sheet."); } catch(x){ t.select(); status("Copy blocked by the browser. The rows are selected; press Ctrl/Cmd + C."); } return; }
+    case "to-current": return openMeeting(latestId());
+    case "open-meeting": return openMeeting(b.dataset.mid);
+  }
+  keepScroll(render);
+});
+$("#edit-toggle").onclick = () => { S.edit = !S.edit; S.editing = null; S.armed = null; if (!S.edit && S.tab === "data") S.tab = "overview"; keepScroll(render); };
+$("#meet").onchange = e => openMeeting(e.target.value);
+function setHash(){ try { history.replaceState(null, "", "#" + S.tab + "-" + S.cur); } catch(e){} }
+async function openMeeting(id){
+  if (!id) return; status("");
+  try { await ensure(id); } catch(x){ alertBar("That meeting could not be loaded. Check the connection and try again."); return; }
+  S.cur = id; S.editing = null; S.armed = null; setHash(); render(); window.scrollTo(0,0);
+}
+function alertBar(msg){ $("#archband").hidden = false; $("#arch-msg").textContent = msg; }
+document.addEventListener("keydown", e => { const c = e.target.closest?.("[data-car]"); if (!c || !["ArrowLeft","ArrowRight"].includes(e.key)) return;
+  const id = c.dataset.car, n = findPanel(id).p.slides.length; if (n < 2) return; S.car[id] = ((S.car[id]||0) + (e.key === "ArrowRight" ? 1 : -1) + n) % n; keepScroll(render); });
+document.addEventListener("change", async e => {
+  const el = e.target;
+  if (el.dataset.path){ const f = findPanel(el.dataset.pid); let v = el.value; if (el.dataset.path === "flagged" || el.dataset.path === "horizontal") v = v === "true";
+    setPath(f.p, el.dataset.path, v); status("Updated: " + (f.p.title || "panel") + "."); if (el.dataset.rerender && S.tab !== "data") keepScroll(render); return; }
+  if (el.dataset.mpath){ setPath(M().meeting, el.dataset.mpath, el.value); keepScroll(render); return; }
+  if (el.dataset.tpath){ M().tabs[S.tab][el.dataset.tpath] = el.value; status("Tab introduction updated."); return; }
+  if (el.dataset.imgadd){ const f = findPanel(el.dataset.imgadd); for (const file of el.files){ f.p.slides.push({img: await shrink(file), caption:""}); } status(el.files.length + " picture(s) added. Add a caption for each."); keepScroll(render); return; }
+  if (el.id === "imp-file" && el.files[0]){ importText(await el.files[0].text()); }
+});
+/* drag to reorder */
+let dragId = null;
+document.addEventListener("dragstart", e => { const h = e.target.closest?.("[data-drag]"); if (!h) return; dragId = h.dataset.drag; e.dataTransfer.effectAllowed = "move"; try{ e.dataTransfer.setData("text/plain", dragId); }catch(x){} h.closest(".panel").classList.add("dragging"); });
+document.addEventListener("dragover", e => { if (!dragId) return; const p = e.target.closest?.(".panel"); if (!p) return; e.preventDefault(); document.querySelectorAll(".dropzone").forEach(x => x.classList.remove("dropzone")); p.classList.add("dropzone"); });
+document.addEventListener("drop", e => { if (!dragId) return; const p = e.target.closest?.(".panel"); e.preventDefault();
+  if (p && p.dataset.pid !== dragId){ const a = findPanel(dragId), bi = a.arr.findIndex(x => x.id === p.dataset.pid); const [m] = a.arr.splice(a.i, 1); a.arr.splice(bi, 0, m); }
+  dragId = null; keepScroll(render); });
+document.addEventListener("dragend", () => { dragId = null; document.querySelectorAll(".dragging,.dropzone").forEach(x => x.classList.remove("dragging","dropzone")); });
+
+/* ---------- images ---------- */
+function shrink(file){ return new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => { const im = new Image(); im.onload = () => {
+  const s = Math.min(1, 1400 / Math.max(im.width, im.height)); const c = document.createElement("canvas"); c.width = Math.round(im.width*s); c.height = Math.round(im.height*s);
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0,0,c.width,c.height); g.drawImage(im, 0, 0, c.width, c.height); res(c.toDataURL("image/jpeg", 0.8)); }; im.onerror = rej; im.src = fr.result; }; fr.onerror = rej; fr.readAsDataURL(file); }); }
+
+/* ---------- import / new meeting ---------- */
+async function importText(txt){
+  try { let o = JSON.parse(txt); if (o.ct && o.iv) o = await decrypt(o);
+    if (o.meeting && o.tabs){ addMeeting(o); S.cur = o.meeting.id; }
+    else if (o.panels){ M().tabs[S.tab] = o; } else throw new Error("shape");
+    status("Loaded."); render(); } catch(x){ status("Could not read that data. Paste an export from this dashboard.", true); }
+}
+/* ---------- sheet rows (same layout as the meeting sheet; see sheetfmt.py) ---------- */
+const PREFIX = {overview:"OV", ps:"PS", rs:"RS", md:"MD", nw:"NW", fn:"FN"};
+const TYPENAME = {text:"Figures and text", line:"Line chart", trend:"Trend chart", bar:"Bar chart", stacked:"Stacked bar chart", carousel:"Pictures"};
+const WIDTHNAME = {full:"Full", wide:"Wide", narrow:"Narrow", half:"Half", third:"Third"};
+function tabRows(t){
+  const tab = M().tabs[t], R = [["TAB", "Introduction", tab.intro || ""]];
+  tab.panels.forEach((p, i) => {
+    const c = PREFIX[t] + "." + String(i+1).padStart(2, "0"), kind = p.type === "chart" ? p.chartType : p.type;
+    R.push([c, "Panel", p.title, TYPENAME[kind]]);
+    if (p.eyebrow) R.push([c, "Label above", p.eyebrow]);
+    R.push([c, "Width", WIDTHNAME[p.width] || "Full"]);
+    if (p.type === "chart"){ if (p.unit) R.push([c, "Unit", p.unit]); if (kind === "bar" || kind === "stacked") R.push([c, "Bars", p.horizontal ? "Horizontal" : "Vertical"]); }
+    if (p.source) R.push([c, "Source", p.source]);
+    if (p.note) R.push([c, "Note", p.note]);
+    if (p.flagged) R.push([c, "Needs checking", "Yes"]);
+    if (p.type === "text"){
+      (p.kpis || []).forEach(k => R.push([c, "Figure", k.label, k.value, k.note || ""]));
+      (p.body || "").split(/\n\s*\n/).filter(b => b.trim()).forEach(b => { const ls = b.split("\n").filter(l => l.trim());
+        if (ls.every(l => /^\s*[-•]\s+/.test(l))) ls.forEach(l => R.push([c, "Point", l.replace(/^\s*[-•]\s+/, "")])); else R.push([c, "Paragraph", ls.join(" ")]); });
+    } else if (p.type === "chart"){
+      R.push([c, "Chart header", ...p.table[0]]); p.table.slice(1).forEach(r => R.push([c, "Chart row", ...r]));
+    } else (p.slides || []).forEach((s, j) => R.push([c, "Picture", s.caption, s.img.startsWith("data:") ? "(paste the Google Drive link for picture " + (j+1) + ")" : s.img]));
+  });
+  return R;
+}
+})();
+</script>
