@@ -59,6 +59,7 @@ def drive_id(s):
 
 # ---------------------------------------------------------------- pictures
 def picture(ref, base_dir, g, warn, where):
+    if ref and ref.strip().startswith("("): ref = ""   # template placeholder text
     if not ref:
         warn.append(f"{where}: a Picture row has no picture yet. Insert the picture into column D (Insert → Image → Image in cell) and press Sync."); return None
     try:
@@ -79,14 +80,24 @@ def picture(ref, base_dir, g, warn, where):
     except Exception as e:
         warn.append(f"{where}: picture could not be read ({e}); skipped."); return None
 
+def norm_id(i, date):
+    """Meeting IDs are yyyy-mm. Fixes typos such as 2026-010 or a date, using the meeting date when needed."""
+    i = str(i).strip()
+    if re.fullmatch(r"\d{4}-\d{2}", i): return i
+    m = re.fullmatch(r"(\d{4})-0*(\d{1,2})(?:-\d{1,2})?", i)
+    if m and 1 <= int(m.group(2)) <= 12: return f"{m.group(1)}-{int(m.group(2)):02d}"
+    return str(date)[:7] if re.match(r"\d{4}-\d{2}", str(date)) else i
+
 def build(index_rows, open_sheet, base_dir, g):
     meetings, warn = [], []
     for r in index_rows:
         if not r["on"]: continue
         c, w = sheetfmt.read_meeting(open_sheet(r["sheet"]))
         w = [f"[{r['id']}] {x}" for x in w]
-        if c["meeting"]["id"] != r["id"]: w.append(f"[{r['id']}] Meeting tab says ID {c['meeting']['id']}; the index ID is used.")
-        c["meeting"]["id"] = r["id"]
+        mid = norm_id(r["id"], c["meeting"].get("date", ""))
+        if mid != r["id"]: w.append(f"[{mid}] Index Meeting ID '{r['id']}' is not yyyy-mm; {mid} (from the meeting date) is used. Correct it in the index.")
+        c["meeting"]["id"] = r["id"] = mid
+        if str(c["meeting"].get("title", "")).startswith("TILN"): c["meeting"]["title"] = "Takshashila" + c["meeting"]["title"][4:]
         if r["sheet"].startswith("http"): c["meeting"]["sheet_url"] = r["sheet"]
         for t in c["tabs"].values():
             for p in t["panels"]:
@@ -96,6 +107,7 @@ def build(index_rows, open_sheet, base_dir, g):
                         d = picture(s["img"], base_dir, g, w, f"[{r['id']}] {t['name']} {p['code']}")
                         if d: keep.append({"img": d, "caption": s["caption"]})
                     p["slides"] = keep
+            t["panels"] = [p for p in t["panels"] if p["type"] != "carousel" or p["slides"]]   # nothing to show yet
         c["warnings"] = [x.split("] ", 1)[-1] for x in w]
         meetings.append(c); warn += w
     meetings.sort(key=lambda c: c["meeting"]["date"])

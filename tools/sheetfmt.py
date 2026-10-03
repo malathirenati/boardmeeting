@@ -1,3 +1,4 @@
+import re
 """The board-meeting sheet format, in both directions.
 
 One workbook per board meeting. Tabs: Guide, Meeting, then one tab per circle.
@@ -337,6 +338,10 @@ def write_meeting(content, path, guide_rows=None):
     wb.save(path)
 
 # ---------------------------------------------------------------- read workbook
+def _group(v):
+    """Sheets turns a typed 859,530 into the number 859530; put the separators back for display."""
+    return f"{int(v):,}" if re.fullmatch(r"\d{4,}", v or "") else v
+
 def _s(v):
     if v is None: return ""
     if isinstance(v, (dt.datetime, dt.date)): return v.strftime("%Y-%m-%d")
@@ -393,7 +398,7 @@ def read_tab(ws, name, warn):
         elif rt == "note": p["note"] = c
         elif rt == "needs checking": p["flagged"] = c.lower() in ("yes", "y", "true")
         elif rt == "show": p["show"] = c.lower() not in ("no", "n", "false", "hide")
-        elif rt == "figure": p["kpis"].append({"label": c, "value": vals[0], "note": vals[1]})
+        elif rt == "figure": p["kpis"].append({"label": c, "value": _group(vals[0]), "note": vals[1]})
         elif rt == "point": p["body"].append(("pt", c))
         elif rt == "paragraph": p["body"].append(("para", c))
         elif rt == "chart header": p["table"].insert(0, [c] + [v for v in vals if v])
