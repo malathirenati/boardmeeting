@@ -88,7 +88,7 @@ HELP = {
  "Paragraph": "C: a paragraph of text.",
  "Chart header": "C: name of the categories (e.g. Cohort). D to I: one series name per column (e.g. DFA, APP, TP). One per chart, above its rows.",
  "Chart row": "C: the category (e.g. Jan 26). D to I: plain numbers, one per series. No ₹, %, commas or text.",
- "Picture": "C: caption. D: the picture's file name in the Pictures folder (e.g. usibc-board.jpg), or its Google Drive link.",
+ "Picture": "C: caption. D: insert the picture straight into this cell (Insert → Image → Image in cell); Sync moves it to the Pictures folder. Or type the file name of a picture already in the Pictures folder.",
 }
 COL_NOTES = {
  1: "PANEL CODE\nRows with the same code make one panel on the dashboard, e.g. PS.03.\nNew panel: use the next free number (PS.09, PS.10 …).\nThe first row of the tab uses TAB.",
@@ -105,7 +105,7 @@ FIRST_NOTES = {
  "Point": (3, "Each Point row becomes one numbered point. Add a point: insert a row, copy the panel code, choose Point."),
  "Chart header": (4, "Series names go across D to I, one per column. The chart draws one line or bar colour per series."),
  "Chart row": (4, "Numbers only. To add a period, insert a Chart row below the last one and type the category in C."),
- "Picture": (4, "Upload the picture to the Pictures folder in the dashboard's Drive folder, then type its file name here (or paste its Drive link). Pictures appear as a slideshow in row order."),
+ "Picture": (4, "Click this cell, then Insert → Image → Image in cell, and choose the picture. At the next Sync it is saved to the Pictures folder and its file name appears here. Pictures appear as a slideshow in row order."),
  "Show": (3, "Set to No to hide this panel for this meeting without deleting the rows."),
 }
 VALUE_LISTS = {"Width": '"Full,Wide,Narrow,Half,Third"', "Bars": '"Horizontal,Vertical"', "Needs checking": '"Yes,No"', "Show": '"Yes,No"'}
@@ -131,7 +131,7 @@ def _circle_tab(wb, name, prefix, rows, meeting_id):
     widths = [10, 16, 56, 18, 14, 14, 14, 14, 14, 26, 60]
     head = HEAD + ["What to enter (automatic)"]
     # banner
-    ws.merge_cells("A1:K1"); ws["A1"] = f"{name}  ·  TILN Board Meeting {meeting_id}"
+    ws.merge_cells("A1:K1"); ws["A1"] = f"{name}  ·  Takshashila Board Meeting {meeting_id}"
     ws["A1"].font = Font(name=F, size=14, bold=True, color="FFFFFF"); ws["A1"].fill = _fill(WINE); ws.row_dimensions[1].height = 28
     ws["A1"].alignment = Alignment(vertical="center", indent=1)
     ws.merge_cells("A2:K2")
@@ -244,7 +244,7 @@ def _guide(wb, meeting_id):
               "② Go down the tab panel by panel. Each dark band is one panel on the dashboard; the rows under it fill that panel.",
               "③ Change the yellow cells: figures, points, chart numbers and picture links. Column K always tells you what a row expects.",
               "④ Add, remove or hide fields as described below. Hover over any cell with a small black triangle in its corner for a tip.",
-              "⑤ When your tab is done, tell the dashboard owner, or use Board dashboard → Publish now in the index sheet."]:
+              "⑤ When your tab is done, press Sync on the dashboard (or Board dashboard → Sync the dashboard now in the index sheet). The dashboard updates in two to three minutes."]:
         line(t, height=30)
 
     h("2. Colour key")
@@ -264,6 +264,7 @@ def _guide(wb, meeting_id):
              ["PS.01", "Figure", "Average revenue per student", "₹10.8k", "Target ₹15k", "", ""],
              ["PS.01", "Figure", "Referral enrolments", "14", "Up from 12 in Feb 2026", "", "← new row: appears as a fifth figure"]])
     line("The same works for every kind of field: a Point row adds a numbered point; a Chart row adds a period to a chart; a Picture row adds a slide.", height=30)
+    line("Add a picture: insert a row in the Pictures panel, choose Picture in B, type the caption in C, click D and choose Insert → Image → Image in cell. Sync saves it to the Pictures folder and puts its file name in D.", height=30)
 
     h("5. Add a new panel")
     line("Example: a bar chart of marketing spend. Use the next free code in your tab (here PS.09). Add the rows at the end of the tab, or where the panel should appear.", height=30)
@@ -290,8 +291,8 @@ def _guide(wb, meeting_id):
              ("Introduction", "Updates from the Policy School circle."), ("Panel", "GCPP programme · Figures and text"),
              ("Label above", "Q4 FY26 performance"), ("Width", "Wide"), ("Figure", "Total enrolled · 320 · APP 43 · DFA 244"),
              ("Point", "72% TP completion."), ("Paragraph", "A short paragraph."), ("Chart header", "Cohort · DFA · APP · TP"),
-             ("Chart row", "May 26 · 244 · 43 · 36"), ("Unit", "students"), ("Bars", "Horizontal"), ("Picture", "Caption · usibc-board.jpg"),
-             ("Source", "TILN board meeting deck, June 2026"), ("Note", "Streams add to 323."), ("Needs checking", "Yes"), ("Show", "No")]])
+             ("Chart row", "May 26 · 244 · 43 · 36"), ("Unit", "students"), ("Bars", "Horizontal"), ("Picture", "Caption · picture inserted in the cell"),
+             ("Source", "Takshashila board meeting deck, June 2026"), ("Note", "Streams add to 323."), ("Needs checking", "Yes"), ("Show", "No")]])
     for i in range(r[0] - 16, r[0]):
         g.merge_cells(f"C{i}:F{i}"); g.row_dimensions[i].height = 32
         g.cell(row=i, column=1).font = Font(name=F, size=9, bold=True)
@@ -300,7 +301,7 @@ def _guide(wb, meeting_id):
     for t in ["Do not rename the tabs or move the columns. Add rows, never columns.",
               "Every panel needs exactly one Panel row. Each code is used for one panel only within a tab.",
               "Chart rows take plain numbers only: no ₹, %, commas, 'K' or text. Leave a cell blank if there is no figure.",
-              "Upload pictures to the Pictures folder inside the Board Meeting Dashboard Drive folder and type the file name in the Picture row. Pictures elsewhere are skipped unless shared with the dashboard's service account.",
+              "Put pictures inside the cell (Insert → Image → Image in cell), not floating over the sheet: floating pictures are not picked up. Sync saves them to the Pictures folder.",
               "Column J is for your own comments; the dashboard never shows it."]:
         line("•  " + t, height=24)
 
@@ -315,7 +316,7 @@ def write_meeting(content, path, guide_rows=None):
     ws = wb.create_sheet("Meeting"); ws.sheet_properties.tabColor = "F1A222"
     _head(ws, ["Field", "Value", "What it means"], [28, 30, 80])
     rows = [("Meeting ID", m["id"], "Year and month of the meeting, yyyy-mm. Must be unique. Set automatically for a new meeting."),
-            ("Meeting title", m.get("title", "TILN Board Meeting"), "Shown on the dashboard."),
+            ("Meeting title", m.get("title", "Takshashila Board Meeting"), "Shown on the dashboard."),
             ("Meeting date", dt.date.fromisoformat(m["date"]), m.get("date_note", "") or "Date of the board meeting."),
             ("Reporting window from", dt.date.fromisoformat(m["window_start"]), "First day the figures cover. Any length of period works."),
             ("Reporting window to", dt.date.fromisoformat(m["window_end"]), "Last day the figures cover. Where a circle's figures cover different dates, say so in that panel's 'Label above'."),
@@ -351,7 +352,7 @@ def read_meeting(path_or_file):
         v = kv.get(k)
         if isinstance(v, (dt.datetime, dt.date)): return v.strftime("%Y-%m-%d")
         return _s(v)
-    meeting = {"id": _s(kv.get("meeting id")), "title": _s(kv.get("meeting title")) or "TILN Board Meeting",
+    meeting = {"id": _s(kv.get("meeting id")), "title": _s(kv.get("meeting title")) or "Takshashila Board Meeting",
                "date": date("meeting date"), "window_start": date("reporting window from"), "window_end": date("reporting window to"),
                "deck_label": _s(kv.get("deck label"))}
     for k in ("id", "date", "window_start", "window_end"):
@@ -443,12 +444,12 @@ def write_index(rows, path):
     dv = DataValidation(type="list", formula1='"Yes,No"', allow_blank=False); ws.add_data_validation(dv); dv.add("D2:D200")
     n = ws.max_row + 2
     for k, t in enumerate(["Start a new meeting: menu Board dashboard → Start a new board meeting… (it copies the latest sheet, sets the dates, shares it with the circle leads and adds a row here).",
-                           "Publish: set On dashboard to Yes, then Board dashboard → Publish to the dashboard now. The dashboard also refreshes every night.",
+                           "Show it: set On dashboard to Yes, then press Sync on the dashboard or use Board dashboard → Sync the dashboard now. The dashboard also refreshes every night.",
                            "Everyone on the Circle leads tab can edit every tab of each meeting sheet."]):
         ws.cell(row=n + k, column=1, value=t).font = Font(name=F, size=10, italic=True, color=INK70)
     cl = wb.create_sheet("Circle leads"); cl.sheet_properties.tabColor = "F1A222"
     _head(cl, ["Circle", "Lead email addresses (comma-separated)", "Role"], [26, 70, 70])
-    for i, (tab, what) in enumerate([("Meeting", "Dashboard owners: set up meetings and publish."),
+    for i, (tab, what) in enumerate([("Meeting", "Dashboard owners: set up meetings."),
                                      ("Overview", "Headline figures and the big developments, usually the CEO's office."),
                                      ("Policy School", "Policy School lead(s)."), ("Research", "Research lead(s)."), ("Media", "Media lead(s)."),
                                      ("Network", "Operations and alumni lead(s)."), ("Finance", "Finance lead(s).")], 2):

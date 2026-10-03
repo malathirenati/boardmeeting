@@ -1,16 +1,23 @@
 /**
- * Paste into the "TILN Board Meetings Index" Google Sheet: Extensions → Apps Script.
- * Script properties (Project settings): GITHUB_REPO = owner/name, GITHUB_TOKEN = fine-grained token
- * with "Actions: read and write" on that one repository.
+ * Paste into the "Takshashila Board Meetings Index" Google Sheet: Extensions → Apps Script.
+ * Script properties (Project settings → Script properties):
+ *   GITHUB_REPO        malathirenati/boardmeeting
+ *   GITHUB_TOKEN       fine-grained token with "Actions: read and write" on that one repository
+ *   SYNC_KEY           any long random text; the same value goes into the repository secret SYNC_KEY
+ *   PICTURES_FOLDER_ID optional; defaults to the Pictures folder below
+ * Then Deploy → New deployment → Web app (Execute as: Me, Who has access: Anyone) so the dashboard's Sync button can reach doGet.
  */
 const CFG = PropertiesService.getScriptProperties();
+const DEFAULT_PICTURES_FOLDER = '1G18tsanwOVSjNlQzVTIVyvEI82ubyp-r';
+const CIRCLE_TABS = ['Overview', 'Policy School', 'Research', 'Media', 'Network', 'Finance'];
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Board dashboard')
     .addItem('Start a new board meeting…', 'newMeeting')
-    .addItem('Publish to the dashboard now', 'publishNow')
+    .addItem('Sync the dashboard now', 'publishNow')
     .addSeparator()
     .addItem('Share a meeting with circle leads…', 'applyPermissionsPrompt')
+    .addItem('Turn on nightly sync', 'setupNightlySync')
     .addToUi();
 }
 
@@ -33,7 +40,7 @@ function newMeeting() {
   const last = rows[rows.length - 1];
   const src = DriveApp.getFileById(idFrom(String(last[2])));
   const parents = src.getParents();
-  const copy = src.makeCopy('TILN Board Meeting ' + id, parents.hasNext() ? parents.next() : DriveApp.getRootFolder());
+  const copy = src.makeCopy('Takshashila Board Meeting ' + id, parents.hasNext() ? parents.next() : DriveApp.getRootFolder());
   const ss = SpreadsheetApp.openById(copy.getId());
   const m = ss.getSheetByName('Meeting');
   m.getRange(2, 1, m.getLastRow() - 1, 2).getValues().forEach((r, i) => {
@@ -55,21 +62,91 @@ function newMeeting() {
   });
   sh.appendRow([id, new Date(date), copy.getUrl(), 'No', 'Copied from ' + last[0] + ' on ' + new Date().toDateString()]);
   applyPermissions(ss);
-  ui.alert('Created "TILN Board Meeting ' + id + '". Everyone on the Circle leads tab can now edit it. Set On dashboard to Yes when every tab is filled in, then publish.');
+  ui.alert('Created "Takshashila Board Meeting ' + id + '". Everyone on the Circle leads tab can now edit it. Set On dashboard to Yes when every tab is filled in, then Sync.');
 }
 
-/** Starts the GitHub Action that reads the sheets and updates the dashboard. */
+/** Menu: moves inserted pictures to the Pictures folder, then starts the GitHub update. */
 function publishNow() {
+  const r = syncAll();
+  SpreadsheetApp.getUi().alert(r.ok
+    ? 'Syncing. ' + (r.pictures ? r.pictures + ' picture(s) moved to the Pictures folder. ' : '') + 'The dashboard updates in about two minutes.'
+    : 'Sync failed: ' + r.error);
+}
+
+/** Called by the dashboard's Sync button (web app). */
+function doGet(e) {
+  const key = CFG.getProperty('SYNC_KEY');
+  if (!key || !e || !e.parameter || e.parameter.key !== key) return json_({ ok: false, error: 'not allowed' });
+  return json_(syncAll());
+}
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/** Collects pictures from every listed meeting sheet, then triggers the GitHub Action. Also run nightly. */
+function syncAll() {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return { ok: true, pictures: 0, note: 'A sync is already running.' };
+  try {
+    let pictures = 0;
+    const sh = SpreadsheetApp.openById(indexId_()).getSheetByName('Meetings');
+    sh.getDataRange().getValues().slice(1).filter(r => r[0] && r[2] && /^\d{4}/.test(String(r[0]))).forEach(r => {
+      try { pictures += collectPictures(SpreadsheetApp.openById(idFrom(String(r[2]))), String(r[0])); }
+      catch (err) { console.warn('Pictures for ' + r[0] + ': ' + err); }
+    });
+    const code = triggerWorkflow_();
+    return code === 204 ? { ok: true, pictures } : { ok: false, pictures, error: 'GitHub answered ' + code + '. Check GITHUB_REPO and GITHUB_TOKEN.' };
+  } finally { lock.releaseLock(); }
+}
+
+/** The index sheet's own ID, also when run from a trigger or the web app. */
+function indexId_() {
+  let id = CFG.getProperty('INDEX_SHEET_ID');
+  if (!id) { id = SpreadsheetApp.getActive().getId(); CFG.setProperty('INDEX_SHEET_ID', id); }
+  return id;
+}
+
+function triggerWorkflow_() {
   const repo = CFG.getProperty('GITHUB_REPO'), token = CFG.getProperty('GITHUB_TOKEN');
-  if (!repo || !token) { SpreadsheetApp.getUi().alert('Set GITHUB_REPO and GITHUB_TOKEN under Extensions → Apps Script → Project settings → Script properties.'); return; }
+  if (!repo || !token) return 0;
   const r = UrlFetchApp.fetch('https://api.github.com/repos/' + repo + '/actions/workflows/sync.yml/dispatches', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' },
     payload: JSON.stringify({ ref: 'main' })
   });
-  SpreadsheetApp.getUi().alert(r.getResponseCode() === 204
-    ? 'Publishing. The dashboard updates in about two minutes.'
-    : 'Publishing failed (' + r.getResponseCode() + '): ' + r.getContentText().slice(0, 200));
+  return r.getResponseCode();
+}
+
+/**
+ * Pictures inserted into a cell (Insert → Image → Image in cell) in column D of a Picture row are saved
+ * to the Pictures folder as <meeting>-<panel>-row<n>.<ext>, and the cell is replaced by that file name.
+ */
+function collectPictures(ss, meetingId) {
+  const folder = DriveApp.getFolderById(CFG.getProperty('PICTURES_FOLDER_ID') || DEFAULT_PICTURES_FOLDER);
+  let moved = 0;
+  CIRCLE_TABS.forEach(name => {
+    const t = ss.getSheetByName(name); if (!t || t.getLastRow() < 5) return;
+    const vals = t.getRange(1, 1, t.getLastRow(), 4).getValues();
+    vals.forEach((r, i) => {
+      if (String(r[1]).trim().toLowerCase() !== 'picture') return;
+      const v = r[3];
+      if (!v || typeof v !== 'object' || v.valueType !== SpreadsheetApp.ValueType.IMAGE) return;
+      const url = v.getContentUrl(); if (!url) return;
+      const blob = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() } }).getBlob();
+      const ext = String(blob.getContentType() || 'image/jpeg').split('/')[1].replace('jpeg', 'jpg');
+      const file = meetingId + '-' + String(r[0]).replace(/[^A-Za-z0-9.]/g, '') + '-row' + (i + 1) + '.' + ext;
+      folder.createFile(blob.setName(file));
+      t.getRange(i + 1, 4).setValue(file);
+      moved++;
+    });
+  });
+  return moved;
+}
+
+/** Menu: runs syncAll every night at about 01:00 (the sheet's time zone). */
+function setupNightlySync() {
+  indexId_();
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'syncAll').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('syncAll').timeBased().everyDays(1).atHour(1).create();
+  SpreadsheetApp.getUi().alert('Nightly sync is on. Pictures are collected and the dashboard updated every night around 1 am.');
 }
 
 /** Reads the Circle leads tab: { 'Policy School': ['a@x.org', …], … } */

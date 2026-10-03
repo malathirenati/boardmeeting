@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>TILN Board Dashboard</title>
+<title>Takshashila Board Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Roboto+Mono:wght@400&display=swap">
@@ -67,6 +67,9 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 
 /* edit band */
 .editband{background:var(--gold-soft);border-bottom:var(--rule)}
+.btn.navghost{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff}
+.btn.navghost:hover{background:var(--wine-dark)}
+#sheet-warn summary{cursor:pointer;font-size:14px;color:var(--neg)}
 .archband{background:var(--ink);color:rgba(255,255,255,.85);font-size:14px}
 .archband .wrap{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-block:12px}
 .rowlist{border-top:2px solid var(--ink)}
@@ -182,7 +185,7 @@ footer .meta{color:rgba(255,255,255,.55)}
   <div class="box" id="lg-form" role="form" aria-labelledby="lg-h">
     <img src="/*LOGO*/" alt="Takshashila Institution">
     <div class="mono" style="color:rgba(255,255,255,.55)">Takshashila Institution · Confidential</div>
-    <h1 id="lg-h">TILN Board <em>Meeting</em></h1>
+    <h1 id="lg-h">Takshashila Board <em>Meeting</em></h1>
     <div><label for="lg-user">Login</label><input id="lg-user" name="username" autocomplete="username" required></div>
     <div><label for="lg-pass">Password</label><input id="lg-pass" name="password" type="password" autocomplete="current-password" required></div>
     <div><button class="btn gold" type="button" id="lg-btn">Sign in →</button></div>
@@ -198,7 +201,9 @@ footer .meta{color:rgba(255,255,255,.55)}
         <div class="brand"><img src="/*LOGO*/" alt=""><div><div class="n">Takshashila Institution</div><div class="m">Board dashboard</div></div></div>
         <div class="navr">
           <select id="meet" aria-label="Board meeting"></select>
-          <button class="btn sm gold" id="edit-toggle" aria-pressed="false">Edit mode: off</button>
+          <a class="btn sm navghost" id="sheet-link" href="#" target="_blank" rel="noopener" hidden>Edit in Google Sheets ↗</a>
+          <button class="btn sm navghost" id="edit-toggle" aria-pressed="false">Edit mode: off</button>
+          <button class="btn sm gold" id="sync-btn" title="Read the Google Sheets and update the dashboard">Sync</button>
           <button class="lnk" id="signout">Sign out</button>
         </div>
       </div>
@@ -208,33 +213,31 @@ footer .meta{color:rgba(255,255,255,.55)}
   <div class="editband" id="editband" hidden>
     <div class="wrap">
       <div class="bar">
-        <span class="msg">Edit mode is a preview. Changes are kept only when made in the meeting sheet: edit there, or copy your tab's rows from here into it.</span>
-        <a class="btn sm" id="sheet-link" href="#" target="_blank" rel="noopener" hidden>Edit in the meeting sheet ↗</a>
-        <button class="btn sm ghost" data-act="show" data-sub="sub-rows">Copy this tab as sheet rows</button>
-        <button class="btn sm ghost" data-act="show" data-sub="sub-export">Export</button>
-        <button class="btn sm ghost" data-act="show" data-sub="sub-import">Import</button>
+        <span class="msg">Edit mode is a preview: try changes here to see how they will look. To keep them, copy your tab's rows into the meeting sheet, then press Sync.</span>
+        <button class="btn sm" data-act="show" data-sub="sub-rows">Copy this tab as sheet rows</button>
       </div>
       <div class="sub" id="sub-rows" hidden>
-        <p style="font-size:14px;color:var(--ink-70)">These rows match your circle's tab in the meeting sheet. In the sheet, clear columns A to J from row 5 down, click cell A5 and paste.</p>
+        <ol style="margin:0;padding-left:20px;font-size:14px;color:var(--ink-70)">
+          <li>Press Copy rows.</li>
+          <li>Open the meeting sheet (Edit in Google Sheets ↗) and go to this circle's tab.</li>
+          <li>Select columns A to J from row 5 down and delete their contents, click cell A5 and paste.</li>
+          <li>Pictures added in Edit mode are not copied: insert each into its Picture row's column D (Insert → Image → Image in cell).</li>
+          <li>Press Sync. The dashboard updates in two to three minutes.</li>
+        </ol>
         <div class="row"><button class="btn sm" data-act="rows-copy">Copy rows</button></div>
         <div class="f"><textarea id="rows-text" readonly aria-label="Sheet rows"></textarea></div>
       </div>
-      <div class="sub" id="sub-export" hidden>
-        <p style="font-size:14px;color:var(--ink-70)">The whole meeting, encrypted with the dashboard password. Save it as <span class="mono" style="text-transform:none;letter-spacing:0">data/&lt;meeting&gt;/meeting.json</span> or keep it as a backup.</p>
-        <div class="row"><button class="btn sm" data-act="export-copy">Copy</button><button class="btn sm ghost" data-act="export-dl">Download file</button></div>
-        <div class="f"><textarea id="exp-text" readonly aria-label="Exported data"></textarea></div>
-      </div>
-      <div class="sub" id="sub-import" hidden>
-        <div class="f"><label for="imp-text">Paste an exported meeting (encrypted or plain JSON)</label><textarea id="imp-text"></textarea></div>
-        <div class="row"><button class="btn sm" data-act="import">Load into this page</button><input type="file" id="imp-file" accept=".json,application/json" aria-label="Import file"></div>
-      </div>
-      <div class="sub" id="sheet-warn" hidden></div>
+    </div>
+  </div>
+  <div class="editband" id="noticeband" hidden>
+    <div class="wrap">
       <div class="status" id="status" role="status"></div>
+      <details class="sub" id="sheet-warn" hidden></details>
     </div>
   </div>
   <div class="archband" id="archband" hidden><div class="wrap"><span id="arch-msg"></span><button class="btn sm gold" data-act="to-current">Go to the current meeting →</button></div></div>
   <main id="view"></main>
-  <footer><div class="wrap"><span>Takshashila Institution · TILN board dashboard · Confidential: for board members and circle leads.</span><span class="meta" id="foot-meta"></span></div></footer>
+  <footer><div class="wrap"><span>Takshashila Institution · Takshashila board dashboard · Confidential: for board members and circle leads.</span><span class="meta" id="foot-meta"></span></div></footer>
 </div>
 
 <script>
@@ -248,10 +251,11 @@ window.addEventListener("unhandledrejection", function(e){ var el = document.get
 const SEED = /*SEED*/null;
 const SALT_B64 = "/*SALT*/", ITER = /*ITER*/;
 const USER = "takshashila";
-const TABS = ["overview","ps","rs","md","nw","fn","data"];
+const TABS = ["overview","ps","rs","md","nw","fn"];
 const TABNAMES = {overview:"Overview",ps:"Policy School",rs:"Research",md:"Media",nw:"Network",fn:"Finance",data:"Edit Data"};
 const PAL = ["#620d3c","#f1a222","#2f6b6b","#b8809f","#4a5a7a","#a8703a"];
 const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const CFG = {};
 const S = { meetings:{}, index:[], remoteStale:{}, cur:null, tab:"overview", edit:false, editing:null, key:null, car:{}, armed:null, remote:false };
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -263,7 +267,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const M = () => S.meetings[S.cur];
 const isArchived = () => S.cur !== latestId();
 function prevMeeting(id){ const i = S.index.findIndex(x => x.id === id); return i > 0 ? S.index[i-1] : null; }
-const mlabel = e => dfmt(e.date) + (e.window_start ? " · " + MON[dt(e.window_start).getMonth()] + " " + dt(e.window_start).getFullYear() + " – " + MON[dt(e.window_end).getMonth()] + " " + dt(e.window_end).getFullYear() : "");
+const mlabel = e => e.window_start ? dfmt(e.window_start) + " – " + dfmt(e.window_end) : dfmt(e.date);
 
 /* ---------- crypto ---------- */
 async function deriveKey(pw){
@@ -282,6 +286,7 @@ const latestId = () => S.index.length ? S.index[S.index.length-1].id : null;
 async function startWithKey(){
   const seed = await decrypt(SEED);
   (seed.meetings || (seed.meeting ? [seed] : [])).forEach(addMeeting);
+  Object.assign(CFG, seed.config || {});
   await loadManifest();
   S.cur = latestId();
   if (!S.cur) throw new Error("No meetings have been published yet");
@@ -290,6 +295,7 @@ async function startWithKey(){
   if (TABS.includes(h[0])) S.tab = h[0];
   await ensure(S.cur);
   $("#login").hidden = true; $("#app").hidden = false;
+  const synced = ss.get("tiln-synced"); if (synced){ ss.del("tiln-synced"); $("#status").textContent = "Dashboard updated from the Google Sheets at " + synced + "."; }
   render();
 }
 async function doLogin(){
@@ -320,7 +326,7 @@ async function getJSON(url){ const ac = new AbortController(), tm = setTimeout((
 async function loadManifest(){
   const man = await getJSON("data/manifest.json");
   if (!man || !Array.isArray(man.meetings)) return;
-  S.remote = true; man.meetings.forEach(m => { if (m.id && m.date) addIndex(m); });
+  S.remote = true; S.version = man.version || null; man.meetings.forEach(m => { if (m.id && m.date) addIndex(m); });
 }
 async function ensure(id){
   if (S.meetings[id] && !S.remoteStale[id]) return;
@@ -363,18 +369,19 @@ function render(){
   const cur = latestId(), arch = S.index.filter(x => x.id !== cur).reverse();
   $("#meet").innerHTML = `<optgroup label="Current">${S.index.filter(x => x.id === cur).map(e => `<option value="${e.id}" ${e.id===S.cur?"selected":""}>${mlabel(e)}</option>`).join("")}</optgroup>` +
     (arch.length ? `<optgroup label="Archive">${arch.map(e => `<option value="${e.id}" ${e.id===S.cur?"selected":""}>${mlabel(e)}</option>`).join("")}</optgroup>` : "");
-  if (isArchived()){ S.edit = false; }
-  $("#archband").hidden = !isArchived();
-  if (isArchived()) $("#arch-msg").textContent = "Archived meeting of " + dfmt(M().meeting.date) + ". Read-only.";
-  $("#edit-toggle").disabled = isArchived(); $("#edit-toggle").title = isArchived() ? "Archived meetings cannot be edited" : "";
+  if (isArchived()) S.edit = false;
+  $("#edit-toggle").disabled = isArchived(); $("#edit-toggle").title = isArchived() ? "Archived meetings cannot be edited" : "Preview changes on the page";
   $("#edit-toggle").textContent = "Edit mode: " + (S.edit ? "on" : "off"); $("#edit-toggle").setAttribute("aria-pressed", S.edit);
   $("#editband").hidden = !S.edit;
-  const su = M().meeting.sheet_url; $("#sheet-link").hidden = !su; if (su) $("#sheet-link").href = su;
+  $("#archband").hidden = !isArchived();
+  if (isArchived()) $("#arch-msg").textContent = "Archived period " + mlabel(S.index.find(x => x.id === S.cur) || {date:M().meeting.date}) + ". Read-only.";
+  const su = M().meeting.sheet_url; $("#sheet-link").hidden = !su || isArchived(); if (su) $("#sheet-link").href = su;
   const W = M().warnings || []; $("#sheet-warn").hidden = !W.length;
-  if (W.length) $("#sheet-warn").innerHTML = `<div class="meta" style="color:var(--neg)">Sheet checks · ${W.length} row${W.length>1?"s":""} could not be shown</div><ul style="margin:0;padding-left:18px;font-size:14px">${W.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  if (W.length) $("#sheet-warn").innerHTML = `<summary>${W.length} row${W.length>1?"s":""} in this meeting's sheet could not be shown. Show which</summary><ul style="margin:8px 0 0;padding-left:18px;font-size:14px">${W.map(w => `<li>${esc(w)}</li>`).join("")}</ul>`;
+  $("#noticeband").hidden = !W.length && !$("#status").textContent;
   $("#foot-meta").textContent = S.index.length + " meeting" + (S.index.length === 1 ? "" : "s") + " on record" + (S.remote ? " · synced from the meeting sheets" : "");
-  $("#view").innerHTML = S.tab === "data" ? dataView() : tabView(S.tab);
-  if (S.tab !== "data") M().tabs[S.tab].panels.forEach(p => { if (p.type === "chart") drawChart(p); });
+  $("#view").innerHTML = tabView(S.tab);
+  M().tabs[S.tab].panels.forEach(p => { if (p.type === "chart") drawChart(p); });
 }
 
 function head(tabKey){
@@ -385,23 +392,22 @@ function head(tabKey){
       <div class="f"><label for="m-ws">Reporting window from</label><input type="date" id="m-ws" data-mpath="window_start" value="${esc(m.window_start)}"></div>
       <div class="f"><label for="m-we">Reporting window to</label><input type="date" id="m-we" data-mpath="window_end" value="${esc(m.window_end)}"></div>
       </div></div>` : "";
-  const pm = prevMeeting(m.id);
   const intro = S.edit ? `<div class="f"><label for="t-intro">Tab introduction</label><textarea id="t-intro" data-tpath="intro" style="min-height:60px">${esc(tab.intro)}</textarea></div>` : `<p class="lede">${esc(tab.intro)}</p>`;
-  return `<div class="head"><div class="eyebrow">${esc(circle)} · ${esc(m.title)}</div>
-    <h1>Board meeting, <em>${dfmt(m.date)}</em></h1>${intro}
+  return `<div class="head"><div class="eyebrow">${esc(m.title)}</div>
+    <h1>${esc(circle)}</h1>${intro}
     <div class="defs">
       <div><span class="meta">Reporting window</span><b>${w.range}</b></div>
       <div><span class="meta">Duration</span><b>${w.n} days · ${w.months} months</b></div>
-      ${pm && pm.window_start ? `<div><span class="meta">Previous meeting</span><b>${dfmt(pm.date)} · ${dfmt(pm.window_start)} – ${dfmt(pm.window_end)}</b></div>` : `<div><span class="meta">Previous meeting</span><b>None on record</b></div>`}
-    </div>${strip(m)}${meetEdit}</div>`;
+      <div><span class="meta">Board meeting</span><b>${dfmt(m.date)}</b></div>
+    </div>${meetEdit}</div>`;
 }
 
 function tabView(t){
   const panels = M().tabs[t].panels;
   const help = S.edit && t === "overview" ? `<div class="help"><div class="eyebrow">How to update this dashboard</div><ol>
-    <li>The meeting's Google Sheet is the record. Circle leads fill it in there, usually each their own tab, though anyone can edit any tab; the dashboard updates after the sync.</li>
-    <li>Edit mode here is for trying layouts: change, add, move or delete panels and see the result at once.</li>
-    <li>To keep a change, press Copy this tab as sheet rows and paste the rows into your tab in the sheet.</li>
+    <li>The meeting's Google Sheet is the record. Circle leads fill it in there, usually each their own tab, though anyone can edit any tab.</li>
+    <li>Edit mode shows how entries will look: change, add, move or delete panels and see the result at once. Nothing here is saved.</li>
+    <li>To keep a change, press Copy this tab as sheet rows, paste the rows into your tab in the sheet, then press Sync.</li>
     <li>For a new meeting, copy the latest meeting sheet, update its Meeting tab and add it to the index sheet. Earlier meetings move to the archive automatically.</li></ol></div>` : "";
   return `<div class="wrap">${head(t)}<div class="panels" id="panels">${help}${panels.map((p,i) => panelHTML(p,i,panels.length)).join("")}
     ${S.edit ? `<div class="addbar"><span class="meta" style="margin-right:auto">Add a panel to ${esc(TABNAMES[t])}</span>
@@ -413,8 +419,8 @@ function archiveList(){
   const cur = latestId();
   return `<section style="padding-block:0 64px"><div class="eyebrow" style="margin-bottom:12px">All board meetings</div><div class="rowlist">${[...S.index].reverse().map(e => {
     const n = e.window_start ? days(e.window_start, e.window_end) : null;
-    return `<button class="ml" data-act="open-meeting" data-mid="${e.id}" ${e.id === S.cur ? 'aria-current="true"' : ""}><span class="t">Board meeting, ${dfmt(e.date)}</span><span class="meta">${e.id === cur ? "Current" : "Archived"}${e.id === S.cur ? " · open" : " →"}</span>
-      <span class="s">${e.window_start ? `Reporting window ${dfmt(e.window_start)} – ${dfmt(e.window_end)} · ${n} days (${(n/30.44).toFixed(1)} months)` : ""}</span></button>`; }).join("")}</div></section>`;
+    return `<button class="ml" data-act="open-meeting" data-mid="${e.id}" ${e.id === S.cur ? 'aria-current="true"' : ""}><span class="t">${mlabel(e)}</span><span class="meta">${e.id === cur ? "Current" : "Archived"}${e.id === S.cur ? " · open" : " →"}</span>
+      <span class="s">${n ? `${n} days (${(n/30.44).toFixed(1)} months) · ` : ""}Board meeting ${dfmt(e.date)}</span></button>`; }).join("")}</div></section>`;
 }
 
 function bodyHTML(txt){
@@ -553,8 +559,8 @@ function dataView(){
     add("Note", "note", p.note, true); add("Source", "source", p.source);
     return R.join("");
   };
-  return `<div class="wrap"><div class="head"><div class="eyebrow">Edit data · Board meeting ${dfmt(M().meeting.date)}</div><h1>Correct any <em>figure</em> or caption</h1>
-    <p class="lede">Every field shown on the dashboard, grouped by tab and panel. Changes apply as you leave each field; save each tab from the bar above.</p></div>
+  return `<div class="wrap"><div class="head"><div class="eyebrow">${esc(M().meeting.title)}</div><h1>Edit Data</h1>
+    <p class="lede">Correct any figure or caption. Every field shown on the dashboard, grouped by tab and panel. Changes apply as you leave each field; save each tab from the bar above.</p></div>
     <div class="dt">${tabs.map(t => `<section><h2>${TABNAMES[t]}</h2>${M().tabs[t].panels.map((p,i) => `<div class="dtwrap"><table class="dtab"><tr><th colspan="2"><span class="pp">${t.toUpperCase()}.${String(i+1).padStart(2,"0")}</span> · ${esc(p.title)}</th></tr>${rowsFor(t,p)}</table></div>`).join("")}</section>`).join("")}</div></div>`;
 }
 
@@ -573,7 +579,7 @@ function keepScroll(fn){ const y = window.scrollY; fn(); window.scrollTo(0, y); 
 
 /* ---------- events ---------- */
 document.addEventListener("click", async e => {
-  const tb = e.target.closest("[data-tab]"); if (tb && tb.closest("#tabs")){ S.tab = tb.dataset.tab; S.editing = null; if (S.tab === "data") S.edit = true; setHash(); render(); window.scrollTo(0,0); return; }
+  const tb = e.target.closest("[data-tab]"); if (tb && tb.closest("#tabs")){ S.tab = tb.dataset.tab; S.editing = null; setHash(); render(); window.scrollTo(0,0); return; }
   const b = e.target.closest("[data-act]"); if (!b) return;
   const act = b.dataset.act, id = b.dataset.id, f = id ? findPanel(id) : null;
   if (act !== "del") S.armed = null;
@@ -596,7 +602,7 @@ document.addEventListener("click", async e => {
       const w = Math.max(...t.map(r => r.length)); f.p.table = t.map(r => { while (r.length < w) r.push(""); return r; }); status("Table replaced: " + (t.length-1) + " rows, " + (w-1) + " series."); break; }
     case "sl-del": f.p.slides.splice(+b.dataset.k, 1); break;
     case "sl-up": { const k = +b.dataset.k; if (k > 0) [f.p.slides[k-1], f.p.slides[k]] = [f.p.slides[k], f.p.slides[k-1]]; break; }
-    case "show": { const sub = document.getElementById(b.dataset.sub); const open = sub.hidden; document.querySelectorAll(".editband .sub").forEach(x => x.hidden = true); sub.hidden = !open;
+    case "show": { const sub = document.getElementById(b.dataset.sub); const open = sub.hidden; document.querySelectorAll("#editband .sub").forEach(x => x.hidden = true); sub.hidden = !open;
       if (b.dataset.sub === "sub-export" && open){ $("#exp-text").value = JSON.stringify(await encrypt(M())); }
       if (b.dataset.sub === "sub-rows" && open){ const t = S.tab === "data" ? "overview" : S.tab; $("#rows-text").value = tabRows(t).map(r => r.map(c => String(c ?? "").replace(/[\t\n]+/g, " ")).join("\t")).join("\n"); }
       return; }
@@ -610,7 +616,25 @@ document.addEventListener("click", async e => {
   }
   keepScroll(render);
 });
-$("#edit-toggle").onclick = () => { S.edit = !S.edit; S.editing = null; S.armed = null; if (!S.edit && S.tab === "data") S.tab = "overview"; keepScroll(render); };
+$("#edit-toggle").onclick = () => { S.edit = !S.edit; S.editing = null; S.armed = null; keepScroll(render); };
+/* ---------- sync: asks the index sheet's script to read the sheets and start the GitHub update ---------- */
+function note(msg, bad){ const s = $("#status"); s.textContent = msg; s.classList.toggle("bad", !!bad); $("#noticeband").hidden = !msg && $("#sheet-warn").hidden; }
+$("#sync-btn").onclick = async () => {
+  const b = $("#sync-btn");
+  if (!CFG.sync_url){ note("Sync is not set up for this copy of the dashboard. On the published site it works once the sheet's sync address has been added (README, step 10).", true); return; }
+  b.disabled = true; b.textContent = "Syncing…";
+  note("Reading the Google Sheets and updating the dashboard. This usually takes two to three minutes; you can keep reading meanwhile.");
+  try { await fetch(CFG.sync_url + "?action=sync&key=" + encodeURIComponent(CFG.sync_key || ""), {mode:"no-cors"}); }
+  catch(x){ note("Could not reach the Google Sheets script. Check the connection and press Sync again.", true); b.disabled = false; b.textContent = "Sync"; return; }
+  const before = S.version, until = Date.now() + 6 * 60000;
+  const poll = async () => {
+    const man = await getJSON("data/manifest.json");
+    if (man && man.version && man.version !== before){ ss.set("tiln-synced", new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})); location.reload(); return; }
+    if (Date.now() > until){ note("Nothing new has arrived from the sheets. If you changed something in the last few minutes, wait a minute and press Sync again; otherwise the dashboard is already up to date."); b.disabled = false; b.textContent = "Sync"; return; }
+    setTimeout(poll, 15000);
+  };
+  setTimeout(poll, 30000);
+};
 $("#meet").onchange = e => openMeeting(e.target.value);
 function setHash(){ try { history.replaceState(null, "", "#" + S.tab + "-" + S.cur); } catch(e){} }
 async function openMeeting(id){
@@ -672,7 +696,7 @@ function tabRows(t){
         if (ls.every(l => /^\s*[-•]\s+/.test(l))) ls.forEach(l => R.push([c, "Point", l.replace(/^\s*[-•]\s+/, "")])); else R.push([c, "Paragraph", ls.join(" ")]); });
     } else if (p.type === "chart"){
       R.push([c, "Chart header", ...p.table[0]]); p.table.slice(1).forEach(r => R.push([c, "Chart row", ...r]));
-    } else (p.slides || []).forEach((s, j) => R.push([c, "Picture", s.caption, s.img.startsWith("data:") ? "(paste the Google Drive link for picture " + (j+1) + ")" : s.img]));
+    } else (p.slides || []).forEach((s, j) => R.push([c, "Picture", s.caption, s.img.startsWith("data:") ? "(insert picture " + (j+1) + " into this cell)" : s.img]));
   });
   return R;
 }

@@ -1,7 +1,7 @@
 """Reads the board-meeting sheets and writes the dashboard's encrypted data files.
 
 Local files (testing):
-  python publish.py --index "sheets/TILN Board Meetings Index.xlsx" --out site
+  python publish.py --index "sheets/Takshashila Board Meetings Index.xlsx" --out site
 Google Sheets (GitHub Action):
   python publish.py --google-index <index sheet ID> --out site
   env: DASHBOARD_PASSWORD, GOOGLE_SERVICE_ACCOUNT_JSON (service-account key JSON)
@@ -59,6 +59,8 @@ def drive_id(s):
 
 # ---------------------------------------------------------------- pictures
 def picture(ref, base_dir, g, warn, where):
+    if not ref:
+        warn.append(f"{where}: a Picture row has no picture yet. Insert the picture into column D (Insert → Image → Image in cell) and press Sync."); return None
     try:
         fid = drive_id(ref) if ref.startswith("http") or len(ref) > 24 else None
         name = os.path.basename(ref)
@@ -121,10 +123,13 @@ def main():
     for c in meetings:
         d = os.path.join(o.out, "data", c["meeting"]["id"]); os.makedirs(d, exist_ok=True)
         json.dump(enc(k, c), open(os.path.join(d, "meeting.json"), "w"))
-    json.dump({"meetings": [{k: c["meeting"][k] for k in ("id", "date", "window_start", "window_end")} for c in meetings]},
+    import hashlib
+    version = hashlib.sha256(json.dumps(meetings, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:12]
+    json.dump({"version": version, "meetings": [{k: c["meeting"][k] for k in ("id", "date", "window_start", "window_end")} for c in meetings]},
               open(os.path.join(o.out, "data", "manifest.json"), "w"), indent=1)
     if o.embed:
-        t = open(o.embed).read().replace("/*SEED*/null", json.dumps(enc(k, {"meetings": [] if o.light else meetings})))
+        t = open(o.embed).read().replace("/*SEED*/null", json.dumps(enc(k, {"meetings": [] if o.light else meetings,
+                                                      "config": {"sync_url": os.environ.get("SYNC_URL", ""), "sync_key": os.environ.get("SYNC_KEY", "")}})))
         t = t.replace("/*SALT*/", base64.b64encode(SALT).decode()).replace("/*ITER*/", str(ITER))
         logo = os.path.join(os.path.dirname(os.path.abspath(o.embed)), "logo_mark.png")
         t = t.replace("/*LOGO*/", "data:image/png;base64," + base64.b64encode(open(logo, "rb").read()).decode())
