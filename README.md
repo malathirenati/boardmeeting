@@ -43,8 +43,8 @@ Editing happens in Google Sheets because a GitHub Pages site cannot save anythin
 | --- | --- |
 | Drive folder | [Board Meeting Dashboard 2026 onwards](https://drive.google.com/drive/folders/1IqBTSc2g3a9XObw3e2_bnmWXq64RWTZ8) (ID `1IqBTSc2g3a9XObw3e2_bnmWXq64RWTZ8`) |
 | Pictures folder | `Pictures` inside it (ID `1G18tsanwOVSjNlQzVTIVyvEI82ubyp-r`) |
-| Repository | `malathirenati/boardmeetings` |
-| Dashboard address | `https://malathirenati.github.io/boardmeetings/` once Pages is on |
+| Repository | `malathirenati/boardmeeting` |
+| Dashboard address | `https://malathirenati.github.io/boardmeeting/` once Pages is on |
 
 ## One-time setup (dashboard owner, about an hour)
 
@@ -53,12 +53,12 @@ Editing happens in Google Sheets because a GitHub Pages site cannot save anythin
 3. **Upload the pictures.** Unzip `TILN-sample-pictures.zip` and drag the pictures (not the folder) into the `Pictures` folder. The sheets already refer to them by file name, so no links need pasting.
 4. **Circle leads.** On the index's Circle leads tab, enter each circle's Google accounts and the dashboard owners. Everyone listed can edit every tab.
 5. **Service account.** In Google Cloud: create a project, enable the Google Drive API, create a service account and download its JSON key. Share the Drive folder with the service account's email as Viewer.
-6. **Repository files.** Upload everything in this zip to `malathirenati/boardmeetings`: on GitHub, Add file → Upload files, drag the unzipped files and folders in, commit. On a Mac, Finder hides the `.github` folder: press Cmd + Shift + . in Finder to show it before dragging. If the workflow does not appear under the Actions tab afterwards, create it by hand: Add file → Create new file, name it `.github/workflows/sync.yml`, paste the contents of that file from the zip, commit.
+6. **Repository files.** Upload everything in this zip to `malathirenati/boardmeeting`: on GitHub, Add file → Upload files, drag the unzipped files and folders in, commit. On a Mac, Finder hides the `.github` folder: press Cmd + Shift + . in Finder to show it before dragging. If the workflow does not appear under the Actions tab afterwards, create it by hand: Add file → Create new file, name it `.github/workflows/sync.yml`, paste the contents of that file from the zip, commit.
 7. **Secrets and variables.** In the repository: Settings → Secrets and variables → Actions.
    - Secrets: `DASHBOARD_PASSWORD` (the dashboard password), `GOOGLE_SERVICE_ACCOUNT_JSON` (the whole JSON key).
    - Variables: `INDEX_SHEET_ID` (the ID in the index sheet's address, the part after `/d/`), `PICTURES_FOLDER_ID` = `1G18tsanwOVSjNlQzVTIVyvEI82ubyp-r`.
 8. **Pages.** Settings → Pages → Deploy from a branch → `main`, `/ (root)`. GitHub's free plan only publishes from a public repository; a private one needs GitHub Pro. Then Actions → Sync board meetings → Run workflow.
-9. **Menu in the index sheet.** Extensions → Apps Script, paste `tools/Code.gs`, save. Project settings → Script properties: `GITHUB_REPO` = `malathirenati/boardmeetings`, `GITHUB_TOKEN` = a fine-grained token with Actions read and write on this repository only. Reload the sheet; the "Board dashboard" menu appears. Run **Share a meeting with circle leads…** for 2026-06 and 2026-02.
+9. **Menu in the index sheet.** Extensions → Apps Script, paste `tools/Code.gs`, save. Project settings → Script properties: `GITHUB_REPO` = `malathirenati/boardmeeting`, `GITHUB_TOKEN` = a fine-grained token with Actions read and write on this repository only. Reload the sheet; the "Board dashboard" menu appears. Run **Share a meeting with circle leads…** for 2026-06 and 2026-02.
 
 ## Each board meeting
 
